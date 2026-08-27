@@ -41,28 +41,6 @@ pub fn capture(url: &str, schemas: &[String]) -> Result<Snapshot> {
     Ok(snapshot)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn detects_documented_database_urls() {
-        assert_eq!(
-            dialect_for_url("postgresql://localhost/db").unwrap(),
-            Dialect::PostgreSql
-        );
-        assert_eq!(
-            dialect_for_url("postgres://localhost/db").unwrap(),
-            Dialect::PostgreSql
-        );
-        assert_eq!(
-            dialect_for_url("mysql://localhost/db").unwrap(),
-            Dialect::MySql
-        );
-        assert!(dialect_for_url("sqlite:///tmp/db").is_err());
-    }
-}
-
 fn keep_schema(schema: &str, allow: &BTreeSet<&str>) -> bool {
     allow.is_empty() || allow.contains(schema)
 }
@@ -309,4 +287,26 @@ fn capture_mysql(url: &str, schemas: &[String]) -> Result<Vec<SchemaObject>> {
         });
     }
     Ok(objects)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn detects_documented_database_urls() {
+        assert_eq!(
+            dialect_for_url("postgresql://localhost/db").unwrap(),
+            Dialect::PostgreSql
+        );
+        assert_eq!(
+            dialect_for_url("postgres://localhost/db").unwrap(),
+            Dialect::PostgreSql
+        );
+        assert_eq!(
+            dialect_for_url("mysql://localhost/db").unwrap(),
+            Dialect::MySql
+        );
+        assert!(dialect_for_url("sqlite:///tmp/db").is_err());
+    }
 }
