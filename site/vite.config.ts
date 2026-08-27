@@ -22,7 +22,7 @@ function offlineShell(): Plugin {
     apply: 'build',
     async closeBundle() {
       const files = (await filesUnder(outputRoot))
-        .filter((file) => file !== '/sw.js' && !file.endsWith('.map'))
+        .filter((file) => file !== '/sw.js' && file !== '/_headers' && !file.endsWith('.map'))
         .sort();
       const version = createHash('sha256').update(files.join('\n')).digest('hex').slice(0, 12);
       const shell = [...new Set(['/', '/privacy/', '/terms/', ...files])];

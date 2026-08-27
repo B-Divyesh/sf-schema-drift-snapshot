@@ -94,7 +94,7 @@ pub fn verify(token: Option<&str>) -> Result<LicenseStatus> {
         .query("license", token)
         .call()
         .and_then(|mut response| response.body_mut().read_to_string())
-        .map_err(|error| anyhow!(error.to_string()))
+        .map_err(|_| anyhow!("license service request failed"))
         .and_then(|body| {
             serde_json::from_str::<VerifyResponse>(&body)
                 .context("billing service returned an unreadable response")
