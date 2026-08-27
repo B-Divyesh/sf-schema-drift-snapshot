@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "dialect": "postgresql",
+  "captured_at": "2026-08-27T12:08:00Z",
+  "source": "observed fixture",
+  "redacted": false,
+  "objects": [
+    { "kind": "table", "schema": "public", "name": "users" },
+    { "kind": "column", "schema": "public", "table": "users", "name": "id", "details": { "data_type": "bigint", "nullable": false } },
+    { "kind": "column", "schema": "public", "table": "users", "name": "email", "details": { "data_type": "varchar(120)", "nullable": false } },
+    { "kind": "column", "schema": "public", "table": "users", "name": "status", "details": { "data_type": "text", "nullable": false, "default": null } },
+    { "kind": "index", "schema": "public", "table": "users", "name": "users_email_idx", "details": { "unique": false } }
+  ]
+}

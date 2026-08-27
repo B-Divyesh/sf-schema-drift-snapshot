@@ -1,0 +1,42 @@
+[package]
+name = "schema-drift-snapshot"
+version = "0.1.0"
+edition = "2024"
+description = "Read-only PostgreSQL/MySQL schema snapshots and human-reviewable drift reports"
+license = "MIT"
+repository = "https://github.com/B-Divyesh/sf-schema-drift-snapshot"
+homepage = "https://schema-drift-snapshot.sociobot.in"
+readme = "README.md"
+keywords = ["database", "schema", "drift", "postgresql", "mysql"]
+categories = ["command-line-utilities", "database"]
+
+[[bin]]
+name = "sds"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+clap = { version = "4.5", features = ["derive", "env"] }
+hex = "0.4"
+mysql = { version = "26.0", default-features = false, features = ["minimal-rust", "rustls-tls"] }
+native-tls = "0.2"
+postgres = "0.19"
+postgres-native-tls = "0.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+ureq = { version = "3.1", default-features = false, features = ["rustls"] }
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.1"
+tempfile = "3.20"
+
+[profile.release]
+strip = true
+lto = "thin"
+codegen-units = 1
+
+[package.metadata.docs.rs]
+all-features = true
