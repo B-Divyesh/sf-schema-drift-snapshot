@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f0e5">
+    <meta name="description" content="Capture PostgreSQL or MySQL schema metadata and turn production drift into a safe, human-reviewable incident report.">
+    <title>Schema Drift Snapshot — Explain database drift before repair</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="preload" as="image" href="/assets/schema-diorama.webp" type="image/webp" fetchpriority="high">
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div class="offline-strip" role="status" hidden>Offline — the demo still runs locally. License checks will resume when you reconnect.</div>
+    <header class="site-header">
+      <a class="wordmark" href="/" aria-label="Schema Drift Snapshot home">
+        <span class="wordmark-mark" aria-hidden="true"><i></i><i></i></span>
+        <span>schema / drift</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#workflow">Workflow</a>
+        <a href="#demo">Local demo</a>
+        <a href="#pricing">Pricing</a>
+        <a href="https://github.com/B-Divyesh/sf-schema-drift-snapshot">Source</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span aria-hidden="true">●</span> Read-only schema incident review</p>
+          <h1 id="hero-title">See what drifted.<br><em>Repair nothing yet.</em></h1>
+          <p class="lede">Turn PostgreSQL or MySQL catalog differences into a review your team can reason about—destructive risk, ORM blind spots, and likely ownership included.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#install">Install the CLI</a>
+            <a class="button secondary" href="#demo">Try the local demo</a>
+          </div>
+          <ul class="trust-line" aria-label="Product boundaries">
+            <li>No row data</li>
+            <li>No repair SQL</li>
+            <li>No schema upload</li>
+          </ul>
+        </div>
+        <figure class="hero-figure">
+          <div class="image-layer">
+            <img src="/assets/schema-diorama.webp" width="1200" height="800" alt="Paper-cut database diagrams separated by a coral seam, representing drift between expected and production schemas." fetchpriority="high">
+          </div>
+          <figcaption><span>Expected schema</span><span class="drift-caption">Observed drift</span></figcaption>
+        </figure>
+      </section>
+
+      <section class="proof-strip" aria-label="Supported workflow">
+        <p>PostgreSQL</p><span aria-hidden="true">→</span><p>portable snapshot</p><span aria-hidden="true">→</span><p>classified review</p>
+        <p>MySQL</p>
+      </section>
+
+      <section class="workflow section" id="workflow" aria-labelledby="workflow-title">
+        <div class="section-intro">
+          <p class="kicker">A calmer incident path</p>
+          <h2 id="workflow-title">Three artifacts. One decision.</h2>
+          <p>The CLI stays outside your migration framework. It gathers metadata, labels the gap, and stops before a repair becomes executable.</p>
+        </div>
+        <ol class="steps">
+          <li>
+            <span class="step-number">01</span>
+            <div><h3>Capture both edges</h3><p>Use a catalog-only role. Keep names, or hash them consistently before an incident artifact leaves your machine.</p></div>
+          </li>
+          <li>
+            <span class="step-number">02</span>
+            <div><h3>Separate the layers</h3><p>Columns, indexes, foreign keys, tables, and views are compared in a stable, versioned format.</p></div>
+          </li>
+          <li>
+            <span class="step-number">03</span>
+            <div><h3>Review before repair</h3><p>Every difference gets a risk, visibility flag, likely owner, and plain-language reason—never destructive SQL.</p></div>
+          </li>
+        </ol>
+      </section>
+
+      <section class="install section" id="install" aria-labelledby="install-title">
+        <div class="section-intro inverse">
+          <p class="kicker">Single local binary</p>
+          <h2 id="install-title">From catalogs to Markdown</h2>
+          <p>Build with stable Rust today. Factory-owned release archives can be attached without changing the command surface.</p>
+        </div>
+        <div class="terminal-sheet">
+          <div class="terminal-label"><span>shell</span><button class="copy-button" type="button" data-copy="cargo install --git https://github.com/B-Divyesh/sf-schema-drift-snapshot --bin sds" aria-label="Copy install command">Copy</button></div>
+          <pre><code>cargo install --git https://github.com/B-Divyesh/sf-schema-drift-snapshot --bin sds</code></pre>
+          <hr>
+          <pre><code><span class="prompt">$</span> sds snapshot --url "$DATABASE_URL" --output prod.json
+<span class="prompt">$</span> sds compare --before expected.json --after prod.json --output review.md
+Wrote 6 classified differences to review.md</code></pre>
+        </div>
+      </section>
+
+      <section class="demo section" id="demo" aria-labelledby="demo-title">
+        <div class="section-intro">
+          <p class="kicker">Browser-local sample</p>
+          <h2 id="demo-title">Open the layers yourself</h2>
+          <p>These are small SDS snapshots. Edit either one, then compare. Input stays in this tab and is never sent anywhere.</p>
+        </div>
+        <div class="demo-workbench">
+          <div class="snapshot-inputs">
+            <label for="before-snapshot"><span>Expected snapshot</span><small>before · staging</small></label>
+            <textarea id="before-snapshot" spellcheck="false" autocomplete="off"></textarea>
+            <label for="after-snapshot"><span>Observed snapshot</span><small>after · production</small></label>
+            <textarea id="after-snapshot" spellcheck="false" autocomplete="off"></textarea>
+          </div>
+          <div class="demo-controls">
+            <button class="button primary" id="compare-button" type="button">Compare locally</button>
+            <button class="text-button" id="reset-demo" type="button">Reset sample</button>
+            <span class="local-note"><i aria-hidden="true"></i> Never uploaded</span>
+          </div>
+          <div class="review-sheet" aria-live="polite" aria-atomic="false">
+            <div class="review-empty" id="review-empty">
+              <span class="empty-cut" aria-hidden="true"></span>
+              <h3>Ready to separate the layers</h3>
+              <p>Run the comparison to classify this sample.</p>
+            </div>
+            <div id="review-error" class="review-error" role="alert" hidden></div>
+            <div id="review-result" hidden>
+              <div class="review-heading"><div><p class="kicker">Review snapshot</p><h3 id="review-summary">Drift found</h3></div><p id="review-counts"></p></div>
+              <ul class="change-list" id="change-list"></ul>
+              <p class="safety-note"><strong>Repair boundary:</strong> this output explains drift. It does not generate or execute a migration.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="classification section" aria-labelledby="classification-title">
+        <div class="section-intro">
+          <p class="kicker">Classification vocabulary</p>
+          <h2 id="classification-title">Built for the awkward boundary</h2>
+        </div>
+        <div class="legend-grid">
+          <article><span class="risk-tab high">High risk</span><h3>Destructive</h3><p>Removed tables or columns, stricter nullability, and changed types get an explicit stop-and-review signal.</p></article>
+          <article><span class="risk-tab medium">Review</span><h3>ORM-invisible</h3><p>Views and database-native details are called out where an ORM model may not tell the whole story.</p></article>
+          <article><span class="risk-tab low">Additive</span><h3>Likely owner</h3><p>Naming and object kind suggest the migration tool, database, or out-of-band DDL path to investigate first.</p></article>
+        </div>
+      </section>
+
+      <section class="pricing section" id="pricing" aria-labelledby="pricing-title">
+        <div class="price-sheet">
+          <div>
+            <p class="kicker">One-time team tool</p>
+            <h2 id="pricing-title">Keep the review free.<br>Unlock CI policy for $49.</h2>
+            <p>Every developer gets capture, redaction, classification, ownership guidance, Markdown, and JSON. Pro adds configurable CI risk gates for one team.</p>
+          </div>
+          <div class="price-action">
+            <p class="price"><span>$</span>49 <small>one time</small></p>
+            <a class="button primary" href="https://api.sociobot.in/api/v1/products/schema-drift-snapshot/checkout">Buy Pro through Sociobot</a>
+            <p class="merchant-note">Sociobot / Dodo is the merchant of record. Refunds revoke the associated license.</p>
+          </div>
+          <form id="license-form" class="restore-form">
+            <label for="license-token">Already bought it? Restore on this device</label>
+            <div><input id="license-token" name="license" type="password" autocomplete="off" required aria-describedby="license-help"><button class="button secondary" type="submit">Verify license</button></div>
+            <small id="license-help">Paste the license token from your receipt. Stored only in this browser.</small>
+            <p id="license-status" class="license-status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="closing section" aria-labelledby="closing-title">
+        <div class="closing-cut" aria-hidden="true"></div>
+        <p class="kicker">Before the migration window</p>
+        <h2 id="closing-title">Make drift reviewable.<br>Keep repair deliberate.</h2>
+        <a class="button primary" href="#install">Install Schema Drift Snapshot</a>
+      </section>
+    </main>
+
+    <footer>
+      <a class="wordmark" href="/"><span class="wordmark-mark" aria-hidden="true"><i></i><i></i></span><span>schema / drift</span></a>
+      <p>Local-first database incident review. MIT-licensed core.</p>
+      <nav aria-label="Legal navigation"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-schema-drift-snapshot">GitHub</a></nav>
+    </footer>
+  </body>
+</html>

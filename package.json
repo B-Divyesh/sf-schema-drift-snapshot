@@ -1,0 +1,23 @@
+{
+  "name": "schema-drift-snapshot-site",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config site/vite.config.ts",
+    "build:site": "vite build --config site/vite.config.ts",
+    "build:cli": "cargo build --release && node site/scripts/copy-binary.mjs",
+    "build": "npm run build:cli && npm run build:site",
+    "typecheck": "tsc --noEmit",
+    "test:site": "npm run typecheck && node --test site/tests/*.test.mjs",
+    "test:e2e": "playwright test",
+    "test": "cargo test && npm run test:site && npm run build:site && npm run test:e2e"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "1.58.2",
+    "playwright-core": "^1.58.2",
+    "typescript": "5.9.2",
+    "vite": "^7.3.6"
+  }
+}
