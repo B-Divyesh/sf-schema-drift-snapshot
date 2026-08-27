@@ -1,0 +1,12 @@
+{
+  "slug": "schema-drift-snapshot",
+  "title": "Schema Drift Snapshot",
+  "territory": "devtools-data",
+  "user": "Developers with PostgreSQL/MySQL schemas and ORM migrations who need a human-reviewable explanation of production drift before applying a repair.",
+  "smallest_useful_product": "Read-only CLI that snapshots schema metadata, compares environments, classifies destructive/ORM-invisible differences, and writes a Markdown review.",
+  "non_goals": ["executing migrations", "row-data diffing", "database hosting", "executable destructive SQL generation"],
+  "success_measure": "In pilot incidents, 90% of schema differences are classified without manually opening a raw catalog dump.",
+  "artifact_class": "cli",
+  "monetization": "one-time",
+  "constraints": ["read-only credentials", "redact names on export", "dialect-specific adapters", "never generate executable destructive SQL by default"]
+}
