@@ -52,6 +52,51 @@ fn details(entries: impl IntoIterator<Item = (&'static str, Value)>) -> BTreeMap
         .collect()
 }
 
+const POSTGRES_CATALOG_OBJECTS_QUERY: &str = "SELECT tables.table_schema, tables.table_name, tables.table_type, views.view_definition \
+     FROM information_schema.tables AS tables \
+     LEFT JOIN information_schema.views AS views \
+       ON views.table_schema = tables.table_schema AND views.table_name = tables.table_name \
+     WHERE tables.table_schema NOT IN ('pg_catalog', 'information_schema') \
+     ORDER BY tables.table_schema, tables.table_name";
+
+const MYSQL_CATALOG_OBJECTS_QUERY: &str = "SELECT tables.TABLE_SCHEMA, tables.TABLE_NAME, tables.TABLE_TYPE, views.VIEW_DEFINITION \
+     FROM information_schema.TABLES AS tables \
+     LEFT JOIN information_schema.VIEWS AS views \
+       ON views.TABLE_SCHEMA = tables.TABLE_SCHEMA AND views.TABLE_NAME = tables.TABLE_NAME \
+     WHERE tables.TABLE_SCHEMA = DATABASE() ORDER BY tables.TABLE_SCHEMA, tables.TABLE_NAME";
+
+/// Convert a row from either dialect's table/view catalog query into the
+/// portable snapshot representation. Views deliberately retain their query
+/// definition: their projected columns alone do not describe joins,
+/// predicates, or security-sensitive expressions.
+fn catalog_object(
+    schema: String,
+    name: String,
+    table_type: String,
+    view_definition: Option<String>,
+) -> SchemaObject {
+    let kind = if table_type.contains("VIEW") {
+        ObjectKind::View
+    } else {
+        ObjectKind::Table
+    };
+    let details = if kind == ObjectKind::View {
+        details([
+            ("table_type", json!(table_type)),
+            ("definition", json!(view_definition)),
+        ])
+    } else {
+        details([("table_type", json!(table_type))])
+    };
+    SchemaObject {
+        kind,
+        schema,
+        table: None,
+        name,
+        details,
+    }
+}
+
 fn capture_postgres(url: &str, schemas: &[String]) -> Result<Vec<SchemaObject>> {
     let connector = TlsConnector::builder()
         .build()
@@ -66,29 +111,13 @@ fn capture_postgres(url: &str, schemas: &[String]) -> Result<Vec<SchemaObject>> 
     let allow = schemas.iter().map(String::as_str).collect::<BTreeSet<_>>();
     let mut objects = Vec::new();
 
-    let table_rows = client.query(
-        "SELECT table_schema, table_name, table_type FROM information_schema.tables \
-         WHERE table_schema NOT IN ('pg_catalog', 'information_schema') \
-         ORDER BY table_schema, table_name",
-        &[],
-    )?;
+    let table_rows = client.query(POSTGRES_CATALOG_OBJECTS_QUERY, &[])?;
     for row in table_rows {
         let schema: String = row.get(0);
         if !keep_schema(&schema, &allow) {
             continue;
         }
-        let table_type: String = row.get(2);
-        objects.push(SchemaObject {
-            kind: if table_type.contains("VIEW") {
-                ObjectKind::View
-            } else {
-                ObjectKind::Table
-            },
-            schema,
-            table: None,
-            name: row.get(1),
-            details: details([("table_type", json!(table_type))]),
-        });
+        objects.push(catalog_object(schema, row.get(1), row.get(2), row.get(3)));
     }
 
     let column_rows = client.query(
@@ -180,25 +209,13 @@ fn capture_mysql(url: &str, schemas: &[String]) -> Result<Vec<SchemaObject>> {
     let allow = schemas.iter().map(String::as_str).collect::<BTreeSet<_>>();
     let mut objects = Vec::new();
 
-    let tables: Vec<(String, String, String)> = conn.query(
-        "SELECT TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE FROM information_schema.TABLES \
-         WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_SCHEMA, TABLE_NAME",
-    )?;
-    for (schema, name, table_type) in tables {
+    let tables: Vec<(String, String, String, Option<String>)> =
+        conn.query(MYSQL_CATALOG_OBJECTS_QUERY)?;
+    for (schema, name, table_type, view_definition) in tables {
         if !keep_schema(&schema, &allow) {
             continue;
         }
-        objects.push(SchemaObject {
-            kind: if table_type == "VIEW" {
-                ObjectKind::View
-            } else {
-                ObjectKind::Table
-            },
-            schema,
-            table: None,
-            name,
-            details: details([("table_type", json!(table_type))]),
-        });
+        objects.push(catalog_object(schema, name, table_type, view_definition));
     }
 
     type MySqlColumn = (String, String, String, u32, String, String, Option<String>);
@@ -292,6 +309,27 @@ fn capture_mysql(url: &str, schemas: &[String]) -> Result<Vec<SchemaObject>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::{
+        diff::{ChangeKind, compare},
+        model::{SCHEMA_VERSION, Snapshot},
+    };
+
+    fn view_snapshot(dialect: Dialect, definition: &str) -> Snapshot {
+        Snapshot {
+            schema_version: SCHEMA_VERSION,
+            dialect,
+            captured_at: "2026-08-28T00:00:00Z".to_owned(),
+            source: "catalog test".to_owned(),
+            redacted: false,
+            redaction_key_id: None,
+            objects: vec![catalog_object(
+                "app".to_owned(),
+                "active_accounts".to_owned(),
+                "VIEW".to_owned(),
+                Some(definition.to_owned()),
+            )],
+        }
+    }
 
     #[test]
     fn detects_documented_database_urls() {
@@ -308,5 +346,51 @@ mod tests {
             Dialect::MySql
         );
         assert!(dialect_for_url("sqlite:///tmp/db").is_err());
+    }
+
+    #[test]
+    fn postgres_definition_only_view_change_is_captured_and_classified() {
+        assert!(POSTGRES_CATALOG_OBJECTS_QUERY.contains("information_schema.views"));
+        assert!(POSTGRES_CATALOG_OBJECTS_QUERY.contains("views.view_definition"));
+        let before = view_snapshot(
+            Dialect::PostgreSql,
+            " SELECT accounts.id FROM accounts WHERE accounts.enabled ",
+        );
+        let after = view_snapshot(
+            Dialect::PostgreSql,
+            " SELECT accounts.id FROM accounts WHERE accounts.enabled AND accounts.verified ",
+        );
+
+        let review = compare(&before, &after).unwrap();
+        assert_eq!(review.summary.total, 1);
+        assert_eq!(review.changes[0].change, ChangeKind::Modified);
+        assert_eq!(review.changes[0].object_kind, ObjectKind::View);
+        assert!(review.changes[0].orm_invisible);
+        assert_eq!(
+            review.changes[0].after.as_ref().unwrap().details["definition"],
+            json!(
+                " SELECT accounts.id FROM accounts WHERE accounts.enabled AND accounts.verified "
+            )
+        );
+    }
+
+    #[test]
+    fn mysql_definition_only_view_change_is_captured_and_classified() {
+        assert!(MYSQL_CATALOG_OBJECTS_QUERY.contains("information_schema.VIEWS"));
+        assert!(MYSQL_CATALOG_OBJECTS_QUERY.contains("views.VIEW_DEFINITION"));
+        let before = view_snapshot(
+            Dialect::MySql,
+            "select `accounts`.`id` from `accounts` where (`accounts`.`enabled` = 1)",
+        );
+        let after = view_snapshot(
+            Dialect::MySql,
+            "select `accounts`.`id` from `accounts` where ((`accounts`.`enabled` = 1) and (`accounts`.`verified` = 1))",
+        );
+
+        let review = compare(&before, &after).unwrap();
+        assert_eq!(review.summary.total, 1);
+        assert_eq!(review.changes[0].change, ChangeKind::Modified);
+        assert_eq!(review.changes[0].object_kind, ObjectKind::View);
+        assert!(review.changes[0].orm_invisible);
     }
 }

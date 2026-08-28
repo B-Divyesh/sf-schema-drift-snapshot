@@ -52,8 +52,9 @@ sds check --before expected.json --after actual.json --fail-on high
 
 `snapshot` auto-detects `postgres://`, `postgresql://`, and `mysql://` URLs and
 only issues catalog queries. `--schema` can be repeated to limit capture.
-Snapshots contain table, view, column, index, and foreign-key metadata—not row
-data. `--redact-names` replaces identifiers with deterministic local hashes so
+Snapshots contain table, view (including query definitions), column, index, and
+foreign-key metadata—not row data. `--redact-names` replaces identifiers and
+definition details with deterministic local hashes so
 the same object still matches across snapshots made with the same
 `--redaction-key`.
 

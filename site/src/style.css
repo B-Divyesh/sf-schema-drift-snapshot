@@ -181,6 +181,9 @@ footer .wordmark { color: var(--ink); }
   .site-header nav a:last-child { font-size: 0; }
   .site-header nav a:last-child::after { content: "Source"; font-size: .82rem; }
   .hero { padding: 44px 0 64px; gap: 40px; }
+  /* The incident controls are the compact-screen priority; retain the
+     diorama on larger canvases where its detail can be read. */
+  .hero-figure { display: none; }
   h1 { font-size: clamp(2.75rem, 14vw, 4rem); }
   .hero-actions, .hero-actions .button { width: 100%; }
   .proof-strip { min-height: 160px; padding-block: 22px; grid-template-columns: 1fr auto 1fr; }

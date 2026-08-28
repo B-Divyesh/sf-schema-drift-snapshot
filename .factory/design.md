@@ -48,6 +48,11 @@ measures 68 characters. Touch targets are at least 44px.
 
 - Sheets use one clipped corner, a 1px ink edge, and a short offset shadow.
 - The hero diorama shows two catalog layers pulled apart at one drift seam.
+- On compact screens (620px and below), the diorama is intentionally omitted
+  rather than shrunk: the incident-review promise, install action, and local
+  demo remain the first render, while the detailed paper artwork remains on
+  larger canvases where it can be read. This keeps the mobile LCP attributable
+  to useful text rather than decorative pixels.
 - Risk chips look like small review tabs, not generic rounded pills.
 - Tables flatten on phones into labelled change blocks; no horizontal task is
   required at 390px.

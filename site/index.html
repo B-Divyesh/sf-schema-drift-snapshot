@@ -7,7 +7,6 @@
     <meta name="description" content="Capture PostgreSQL or MySQL schema metadata and turn production drift into a safe, human-reviewable incident report.">
     <title>Schema Drift Snapshot — Explain database drift before repair</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="preload" as="image" href="/assets/schema-diorama.webp" type="image/webp" fetchpriority="high">
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body>
@@ -44,7 +43,7 @@
         </div>
         <figure class="hero-figure">
           <div class="image-layer">
-            <img src="/assets/schema-diorama.webp" width="1200" height="800" alt="Paper-cut database diagrams separated by a coral seam, representing drift between expected and production schemas." fetchpriority="high">
+            <img src="/assets/schema-diorama.webp" width="1200" height="800" alt="Paper-cut database diagrams separated by a coral seam, representing drift between expected and production schemas." loading="lazy" decoding="async" fetchpriority="low">
           </div>
           <figcaption><span>Expected schema</span><span class="drift-caption">Observed drift</span></figcaption>
         </figure>

@@ -26,6 +26,14 @@ test('hero stays within the mobile image budget', async () => {
   assert.ok(image.size <= 300 * 1024, `hero is ${image.size} bytes`);
 });
 
+test('compact first render defers the nonessential hero artwork', async () => {
+  const html = await readFile(new URL('site/index.html', root), 'utf8');
+  const css = await readFile(new URL('site/src/style.css', root), 'utf8');
+  assert.doesNotMatch(html, /rel="preload"[^>]+schema-diorama/);
+  assert.match(html, /schema-diorama\.webp[^>]+loading="lazy"[^>]+decoding="async"[^>]+fetchpriority="low"/);
+  assert.match(css, /@media \(max-width: 620px\)[\s\S]*?\.hero-figure \{ display: none; \}/);
+});
+
 test('design record contains product-specific tokens and provenance', async () => {
   const design = await readFile(new URL('.factory/design.md', root), 'utf8');
   assert.match(design, /paper-cut incident diorama/i);

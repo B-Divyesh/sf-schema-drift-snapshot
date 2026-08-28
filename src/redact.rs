@@ -99,4 +99,38 @@ mod tests {
         assert!(!serialized.contains("private"));
         assert!(!serialized.contains("email"));
     }
+
+    #[test]
+    fn redaction_hides_a_captured_view_definition() {
+        let input = Snapshot {
+            schema_version: SCHEMA_VERSION,
+            dialect: Dialect::MySql,
+            captured_at: "now".to_owned(),
+            source: "catalog test".to_owned(),
+            redacted: false,
+            redaction_key_id: None,
+            objects: vec![SchemaObject {
+                kind: ObjectKind::View,
+                schema: "private".to_owned(),
+                table: None,
+                name: "active_customers".to_owned(),
+                details: BTreeMap::from([(
+                    "definition".to_owned(),
+                    json!("SELECT email FROM private.customers WHERE enabled = true"),
+                )]),
+            }],
+        };
+
+        let output = redact(input, "shared-key");
+        let serialized = serde_json::to_string(&output).unwrap();
+        assert!(!serialized.contains("active_customers"));
+        assert!(!serialized.contains("private.customers"));
+        assert!(!serialized.contains("enabled"));
+        assert!(
+            output.objects[0].details["definition"]
+                .as_str()
+                .unwrap()
+                .starts_with("detail_")
+        );
+    }
 }

@@ -1,5 +1,6 @@
 use assert_cmd::cargo::cargo_bin_cmd;
 use predicates::prelude::*;
+use std::fs;
 use std::io::{Read, Write};
 use std::net::TcpListener;
 
@@ -29,6 +30,50 @@ fn markdown_review_never_contains_repair_sql() {
         .stdout(predicate::str::contains("no executable repair SQL"))
         .stdout(predicate::str::contains("DROP TABLE").not())
         .stdout(predicate::str::contains("ALTER TABLE").not());
+}
+
+#[test]
+fn definition_only_view_changes_are_detected_for_both_dialects() {
+    for (dialect, before_definition, after_definition) in [
+        (
+            "postgresql",
+            "SELECT id FROM accounts WHERE enabled",
+            "SELECT id FROM accounts WHERE enabled AND verified",
+        ),
+        (
+            "mysql",
+            "select `id` from `accounts` where (`enabled` = 1)",
+            "select `id` from `accounts` where ((`enabled` = 1) and (`verified` = 1))",
+        ),
+    ] {
+        let directory = tempfile::tempdir().unwrap();
+        let before = directory.path().join("before.sds.json");
+        let after = directory.path().join("after.sds.json");
+        let snapshot = |definition: &str| {
+            format!(
+                r#"{{"schema_version":1,"dialect":"{dialect}","captured_at":"2026-08-28T00:00:00Z","source":"catalog","redacted":false,"objects":[{{"kind":"view","schema":"app","name":"active_accounts","details":{{"table_type":"VIEW","definition":{}}}}}]}}"#,
+                serde_json::to_string(definition).unwrap()
+            )
+        };
+        fs::write(&before, snapshot(before_definition)).unwrap();
+        fs::write(&after, snapshot(after_definition)).unwrap();
+
+        cargo_bin_cmd!("sds")
+            .args([
+                "compare",
+                "--before",
+                before.to_str().unwrap(),
+                "--after",
+                after.to_str().unwrap(),
+                "--json",
+            ])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("\"total\": 1"))
+            .stdout(predicate::str::contains("\"change\": \"modified\""))
+            .stdout(predicate::str::contains("\"object_kind\": \"view\""))
+            .stdout(predicate::str::contains("\"orm_invisible\": true"));
+    }
 }
 
 #[test]

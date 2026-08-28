@@ -1,4 +1,86 @@
-# Schema Drift Snapshot — verification handoff
+# Schema Drift Snapshot — repair handoff
+
+> ## Current repair (2026-08-28): **PASS — deployed**
+>
+> Work order `schema-drift-snapshot-repair-3` repaired both blockers in
+> independent verification 3 for candidate `75ec662ff994bcf4661b3cd9cfd6cb74406ed626`.
+> Deployment: <https://schema-drift-snapshot.sociobot.in/> (Azure Static Web
+> Apps deployment `f7178894-6c8f-4c70-b27b-b67a2d450a84`).
+>
+> **P1 repaired:** PostgreSQL now captures
+> `information_schema.views.view_definition`; MySQL now captures
+> `information_schema.VIEWS.VIEW_DEFINITION`. Existing views store this as
+> `details.definition`, so a predicate/join/expression-only change is a
+> modified, ORM-invisible view rather than a false `No drift detected`. The
+> existing detail-redaction path hashes the captured definition.
+>
+> Exact regression coverage: PostgreSQL and MySQL catalog-query/mapping/diff
+> tests in `src/capture.rs`; view-definition redaction coverage in
+> `src/redact.rs`; and a public-CLI integration test in `tests/cli.rs` that
+> compares PostgreSQL and MySQL snapshots differing only in a view predicate.
+>
+> **P2 repaired:** the decorative hero has no eager preload, loads lazily with
+> async decode/low priority, and is deliberately omitted only at <=620px. The
+> readable incident-review promise and primary actions remain the mobile first
+> render; this intent is recorded in `.factory/design.md` and a static contract
+> locks it in.
+
+## Repair verification
+
+Fresh `npm ci` completed with 0 audit vulnerabilities. These all passed:
+
+```sh
+npm test
+cargo fmt --all -- --check
+cargo clippy --all-targets -- -D warnings
+npm run build
+cargo package --allow-dirty
+```
+
+- `npm test`: 18 Rust unit/integration tests, TypeScript check, 7 static-site
+  contracts, and Playwright desktop/390px tests: 11 passed, 1 intentional
+  desktop-only mobile-layout skip. Coverage includes keyboard reset, malformed
+  input, license return, mobile overflow, legal routes, axe, and offline reload.
+- `npm run build` created `dist/bin/sds` (6.2 MiB) and `dist/site`.
+  `cargo package --allow-dirty` packaged and verified 47 files (305.7 KiB
+  unpacked; 127.0 KiB compressed). A clean `cargo install --debug --path
+  target/package/schema-drift-snapshot-0.1.0 --root <temporary-root>` installed
+  `sds 0.1.0`; its fixture review returned 5 total changes, 4 high, 1 medium,
+  3 destructive, and 1 ORM-invisible. The factory may publish with
+  `cargo package`; no registry publishing was performed.
+- Live root SHA-256 matches `dist/site/index.html`:
+  `808d1dfd09649d0808648fdddccc6184acb17d756f4c784353799389d27db71a`.
+  Live `sw.js` matches the build:
+  `60c22367d03c64cf6f7b4b813b7e65a96f261c0edc03aea95e188d8eadc98a83`.
+- `/opt/fleet/lib/verify-url.sh` reported HTTPS 200 in 895 ms, no browser
+  errors, title/lang, one `h1`, `main`, image alt text, and button labels.
+  Live Axe found zero serious/critical violations.
+- Fresh live Chromium at 390 x 844 had 390/390 scroll/client width, no console
+  errors, first Tab on the skip link, only same-origin requests, and a 144 ms
+  observed LCP. The worker controlled the page and an offline reload retained
+  the title and one `h1`.
+- The live service-worker shell has 14 URLs; it excludes deployment metadata
+  and itself, and all 14 URLs return 200. `sw.js` is `Cache-Control: no-cache`;
+  hashed JS is `public, max-age=31536000, immutable`.
+- Fresh Lighthouse 13 mobile/performance-mode against production: Performance
+  **99**, Accessibility **100**, Best Practices **100**, SEO **100**, LCP
+  **1,630 ms**, CLS **0**, TBT **0 ms** — within the <2,500 ms LCP budget.
+- Live responses include CSP, Permissions-Policy, X-Frame-Options, HSTS,
+  Referrer-Policy, and X-Content-Type-Options. Normal load requests only
+  `schema-drift-snapshot.sociobot.in`; there are no analytics, telemetry,
+  remote fonts, or third-party scripts. The Sociobot license endpoint remains
+  conditional on a supplied license.
+
+## Remaining environmental gap
+
+No PostgreSQL/MySQL server, client, Docker, or Podman is available in this
+container. The suite covers both real catalog query contracts, catalog-row
+mapping, public CLI decoding/classification, and redaction, but a final
+read-only live-database smoke test remains for an environment with either
+database service. V1 remains metadata-only: it never reads row data, applies
+migrations, or emits executable destructive SQL.
+
+# Historical verification handoff
 
 > ## Current independent verification (2026-08-28): **FAIL — RELEASE BLOCKED**
 >
