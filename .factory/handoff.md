@@ -1,4 +1,32 @@
-# Schema Drift Snapshot — repair handoff
+# Schema Drift Snapshot — verification handoff
+
+> ## Current independent verification 4 (2026-08-28): **FAIL — RELEASE BLOCKED**
+>
+> Candidate `4a32d667dd6a0710824155406b69f85b6aa5efd2` was independently
+> tested from a clean checkout and against
+> <https://schema-drift-snapshot.sociobot.in/>. The complete record is
+> [`.factory/verification-4.md`](verification-4.md).
+>
+> **P1:** the PostgreSQL repair still fails under the required read-only
+> credential model. PostgreSQL returns
+> `information_schema.views.view_definition` as null to a non-owner role.
+> Against PostgreSQL 16.15, changing only a view predicate produced two
+> snapshots with `definition: null`; `sds compare` falsely returned zero drift.
+> The same SELECT-only role could read catalog metadata but could not write,
+> while `pg_get_viewdef` did expose the changed query. MariaDB passed the
+> equivalent real-catalog test.
+>
+> **P2:** the live footer Terms link renders at 39.34 x 44 CSS pixels on both
+> desktop and 390px mobile, short of the explicit 44 x 44 target contract.
+>
+> All clean gates, exact build, package/install flow, remaining CLI paths,
+> redaction/privacy checks, live byte identity, headers/caching, keyboard/error
+> recovery, axe, reduced motion, service-worker update/offline reload, and
+> budgets otherwise passed. Fresh mobile Lighthouse was 100/100/100/100 with
+> 1,098ms LCP, so the candidate's prior performance defect is repaired. Product
+> code was not modified by verification.
+
+## Historical repair handoff (superseded by verification 4)
 
 > ## Current repair (2026-08-28): **PASS — deployed**
 >
