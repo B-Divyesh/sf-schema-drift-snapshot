@@ -1,17 +1,26 @@
-# Schema Drift Snapshot — build handoff
+# Schema Drift Snapshot — repair handoff
 
-> ## Independent verifier decision (2026-08-28): **FAIL**
+> ## Repair verification (2026-08-28): **PASS**
 >
-> Candidate `7df275e8fedc88e39cccbe95362ac280d640a261` functionally builds,
-> tests, packages, and hash-matches the live content at
-> <https://schema-drift-snapshot.sociobot.in/>. Do not release the current
-> deployment: it omits the CSP, `Permissions-Policy`, and `X-Frame-Options`
-> declared in the shipped `_headers`, and serves hashed assets and `sw.js` with
-> only `public, must-revalidate, max-age=30` rather than the shipped immutable/
-> no-cache policies. See `.factory/verification.md` for exact fresh evidence,
-> P1/P2/P3 defects, full test results, and retest commands.
+> This repair resolves every blocker in the independent verifier report for
+> candidate `7df275e8fedc88e39cccbe95362ac280d640a261`. Product code was
+> deployed from `3a00c307c5b8f47ce1b533b622684d010561e8f7` to
+> <https://schema-drift-snapshot.sociobot.in/>.
+>
+> - **P1:** `staticwebapp.config.json` now translates the existing `_headers`
+>   policy to Azure Static Web Apps' native format. Fresh live `/` responses
+>   include the restrictive CSP, `Permissions-Policy`, and `X-Frame-Options:
+>   DENY`.
+> - **P2:** the same native configuration sends `Cache-Control: public,
+>   max-age=31536000, immutable` for `/assets/*` and `Cache-Control: no-cache`
+>   for `/sw.js` in production.
+> - **P3:** `snapshot --redact-names` now requires its key before any URL
+>   dispatch or database connection. The integration regression test uses a
+>   supported unreachable PostgreSQL URL, asserts the precise missing-key
+>   error and exit code 2, asserts no connection error, and confirms that no
+>   snapshot file is created.
 
-Work order: `schema-drift-snapshot-build-1`
+Work order: `schema-drift-snapshot-repair-1`
 
 Version: `0.1.0`
 
@@ -60,38 +69,57 @@ The exact build command is `npm run build`. It creates:
 - `dist/bin/sds` — stripped Linux release binary (6.2 MB in this build)
 - `dist/site/index.html` — static deployment root
 
-The factory should deploy `dist/site`. It owns release archives, registry
-credentials, billing product registration, DNS, and deployment. No publish,
-billing-registration, or infrastructure action was performed by this worker.
+`dist/site` was deployed with `/opt/fleet/lib/deploy-static.sh
+schema-drift-snapshot dist/site`. The deployment uses Azure Static Web Apps and
+the checked-in `staticwebapp.config.json`; `_headers` remains the portable
+declaration for other static hosts.
 
 ## Verification evidence
 
-All checks were run locally against the final production build:
+All checks below were run after a clean `npm ci` against the repaired build:
 
-- `npm test` — pass: 13 Rust tests (6 library, 2 binary, 5 integration), 4
+- `npm ci` — pass; `npm audit` reported 0 vulnerabilities.
+- `npm test` — pass: 14 Rust tests (6 library, 2 binary, 6 integration), 5
   Node contract tests, strict TypeScript, and 9 Playwright checks across
-  desktop Chromium and a 390×844 mobile viewport (one intentional
-  desktop-project skip for the mobile-only overflow assertion).
+  desktop Chromium and a 390×844 mobile viewport (one intentional desktop
+  skip for the mobile-only overflow assertion).
 - Playwright axe integration — 0 serious or critical violations on desktop and
   mobile.
 - `cargo fmt --all -- --check` — pass.
 - `cargo clippy --all-targets -- -D warnings` — pass.
-- `npm audit` — 0 known vulnerabilities.
-- `npm run build` — pass; release CLI and static site emitted to `dist/`.
-- `cargo package --allow-dirty` — pass; 43 files, 116.0 KiB compressed, package
-  verification compile successful. Ready-to-publish dry run only; nothing was
-  published.
+- `npm run build` — pass; emitted `dist/bin/sds` (6,399,072 bytes) and the
+  static site, including `dist/site/staticwebapp.config.json`.
+- `cargo package --allow-dirty` — pass. A clean temporary consumer root then
+  installed `target/package/schema-drift-snapshot-0.1.0` with `cargo install
+  --path ... --root ...`; its `sds compare` command produced the documented 5
+  differences (4 high, 1 medium, 3 destructive, 1 ORM-invisible). Ready to
+  publish with `cargo package`; nothing was published.
 - `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4173 <evidence-dir>` — HTTP
-  200, load 534 ms, zero console/page errors, title and `lang=en` present, one
+  200, load 524 ms, zero console/page errors, title and `lang=en` present, one
   `h1`, main landmark present, zero missing alt text, zero unlabeled buttons.
-- Lighthouse 13 mobile defaults against the production preview: Performance
-  **100**, Accessibility **100**, Best Practices **100**, SEO **100**. LCP
-  **1,362 ms**, CLS **0**, total blocking time **0 ms**.
+- An activated service worker controlled an offline reload of the built preview;
+  the reload retained the expected title and exactly one `h1`.
+- Lighthouse 13 against the production preview: Performance **100**,
+  Accessibility **100**, Best Practices **100**, SEO **100**; LCP **1,359 ms**,
+  CLS **0**, total blocking time **0 ms**.
 - Initial production assets: JavaScript 7.9 KiB uncompressed in total, CSS
   13.9 KiB, fonts 0 bytes, hero WebP 53.2 KiB. These are below the 200/50/120/
   300 KiB budgets respectively.
 - Manual full-page review completed at desktop and 390px: no horizontal
   overflow, clipped content, obscured controls, or broken hierarchy.
+
+### Production identity and response-policy evidence
+
+- `deploy-static.sh` completed Azure deployment ID
+  `0b479a91-d6b8-426b-828c-4de48ec2e039`.
+- Fresh HTTPS `HEAD` checks on `/`, `/assets/main-CSGRf9Yn.js`, and `/sw.js`
+  verified the P1/P2 policies above. The root also retains HSTS,
+  `Referrer-Policy`, and `X-Content-Type-Options`.
+- Fresh live SHA-256 comparisons confirmed that `/` and
+  `/assets/main-CSGRf9Yn.js` are byte-identical to `dist/site`.
+- `/opt/fleet/lib/verify-url.sh https://schema-drift-snapshot.sociobot.in/`
+  returned HTTP 200 in 778 ms with zero console/page errors, `lang=en`, one
+  `h1`, a main landmark, and no missing image alt text or unlabeled buttons.
 
 ## Known gaps and deliberate boundaries
 
