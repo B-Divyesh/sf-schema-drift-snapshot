@@ -144,13 +144,20 @@ fn run(cli: Cli) -> Result<u8> {
             redaction_key,
             json: as_json,
         } => {
-            let mut snapshot = capture::capture(&url, &schema)?;
-            if redact_names {
-                let key = redaction_key.as_deref().ok_or_else(|| {
+            // Reject an incomplete redaction request before opening a database
+            // connection. Besides giving callers a deterministic actionable
+            // error, this ensures invalid invocations never read a catalog.
+            let configured_redaction_key = if redact_names {
+                Some(redaction_key.as_deref().ok_or_else(|| {
                     anyhow::anyhow!(
                         "--redact-names requires --redaction-key or SDS_REDACTION_KEY so captures remain comparable"
                     )
-                })?;
+                })?)
+            } else {
+                None
+            };
+            let mut snapshot = capture::capture(&url, &schema)?;
+            if let Some(key) = configured_redaction_key {
                 snapshot = redact::redact(snapshot, key);
             }
             let encoded = serde_json::to_vec_pretty(&snapshot)?;

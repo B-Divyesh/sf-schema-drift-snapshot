@@ -32,3 +32,20 @@ test('design record contains product-specific tokens and provenance', async () =
   assert.match(design, /provenance/i);
   assert.match(design, /prefers-reduced-motion/);
 });
+
+test('Azure deployment policy preserves the security and cache contract', async () => {
+  const declared = await readFile(new URL('site/public/_headers', root), 'utf8');
+  const config = JSON.parse(await readFile(new URL('site/public/staticwebapp.config.json', root), 'utf8'));
+
+  assert.match(declared, /Content-Security-Policy:/);
+  assert.equal(
+    config.globalHeaders['Content-Security-Policy'],
+    "default-src 'self'; connect-src 'self' https://api.sociobot.in; img-src 'self'; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
+  );
+  assert.equal(config.globalHeaders['Permissions-Policy'], 'camera=(), microphone=(), geolocation=(), payment=()');
+  assert.equal(config.globalHeaders['X-Frame-Options'], 'DENY');
+
+  const headersFor = (route) => config.routes.find((entry) => entry.route === route)?.headers;
+  assert.deepEqual(headersFor('/assets/*'), { 'Cache-Control': 'public, max-age=31536000, immutable' });
+  assert.deepEqual(headersFor('/sw.js'), { 'Cache-Control': 'no-cache' });
+});

@@ -48,6 +48,33 @@ fn unsupported_database_urls_fail_with_the_documented_exit_code() {
 }
 
 #[test]
+fn redaction_key_is_validated_before_a_database_connection() {
+    let directory = tempfile::tempdir().unwrap();
+    let output = directory.path().join("capture.sds.json");
+
+    cargo_bin_cmd!("sds")
+        .args([
+            "snapshot",
+            "--url",
+            "postgresql://127.0.0.1:1/unreachable",
+            "--output",
+            output.to_str().unwrap(),
+            "--redact-names",
+        ])
+        .assert()
+        .code(2)
+        .stderr(predicate::str::contains(
+            "--redact-names requires --redaction-key",
+        ))
+        .stderr(predicate::str::contains("could not connect to PostgreSQL").not());
+
+    assert!(
+        !output.exists(),
+        "invalid redaction input must not create a snapshot file"
+    );
+}
+
+#[test]
 fn help_states_the_read_only_safety_boundary() {
     cargo_bin_cmd!("sds")
         .arg("--help")
