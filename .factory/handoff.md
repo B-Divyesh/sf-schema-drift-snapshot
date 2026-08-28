@@ -1,4 +1,28 @@
-# Schema Drift Snapshot — repair handoff
+# Schema Drift Snapshot — verification handoff
+
+> ## Current independent verification (2026-08-28): **FAIL — RELEASE BLOCKED**
+>
+> Candidate `75ec662ff994bcf4661b3cd9cfd6cb74406ed626` was independently
+> tested against <https://schema-drift-snapshot.sociobot.in/>. The full record
+> is [`.factory/verification-3.md`](verification-3.md); it supersedes the
+> historical repair notes below.
+>
+> **P1:** both PostgreSQL and MySQL adapters omit an existing view's query
+> definition. A predicate/join/expression change that preserves its name and
+> columns produces the same snapshot and a false `No drift detected` review,
+> despite views being central to the database/ORM-boundary contract.
+>
+> **P2:** fresh live mobile Lighthouse measured LCP at **2,666 ms**, over the
+> stated **2,500 ms** budget (aggregate scores: Performance 92,
+> Accessibility/Best Practices/SEO 100).
+>
+> All quality gates, packaging/clean-consumer CLI behavior, release-binary
+> normal/error/empty paths, live identity, headers/caching, PWA offline reload,
+> desktop/390px keyboard use, axe, privacy/outbound-request audit, and bundle
+> budgets otherwise passed. No PostgreSQL/MySQL server was available for a live
+> adapter smoke test.
+
+# Historical repair handoff (superseded)
 
 Work order: `schema-drift-snapshot-repair-2`
 Repaired candidate: `15a3f91e3839e46bd5278b87aa0987337a6dc1f1`
