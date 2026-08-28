@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test:site": "npm run typecheck && node --test site/tests/*.test.mjs",
     "test:e2e": "playwright test",
-    "test": "cargo test && npm run test:site && npm run build:site && npm run test:e2e"
+    "test": "cargo test && npm run typecheck && npm run build:site && node --test site/tests/*.test.mjs && npm run test:e2e"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

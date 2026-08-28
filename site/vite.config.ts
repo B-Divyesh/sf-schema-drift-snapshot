@@ -6,6 +6,10 @@ import { defineConfig, type Plugin } from 'vite';
 
 const siteRoot = fileURLToPath(new URL('.', import.meta.url));
 const outputRoot = path.resolve(siteRoot, '../dist/site');
+// These files configure a static host; Azure deliberately does not expose its
+// configuration file as a public asset. Keep them out of the offline shell so
+// one deployment target cannot make service-worker installation fail.
+const deploymentMetadata = new Set(['/sw.js', '/_headers', '/staticwebapp.config.json']);
 
 async function filesUnder(directory: string, base = directory): Promise<string[]> {
   const entries = await fs.readdir(directory, { withFileTypes: true });
@@ -22,7 +26,7 @@ function offlineShell(): Plugin {
     apply: 'build',
     async closeBundle() {
       const files = (await filesUnder(outputRoot))
-        .filter((file) => file !== '/sw.js' && file !== '/_headers' && !file.endsWith('.map'))
+        .filter((file) => !deploymentMetadata.has(file) && !file.endsWith('.map'))
         .sort();
       const version = createHash('sha256').update(files.join('\n')).digest('hex').slice(0, 12);
       const shell = [...new Set(['/', '/privacy/', '/terms/', ...files])];

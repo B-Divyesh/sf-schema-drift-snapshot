@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile, stat } from 'node:fs/promises';
+import { access, readFile, stat } from 'node:fs/promises';
 import test from 'node:test';
 
 const root = new URL('../../', import.meta.url);
@@ -48,4 +48,22 @@ test('Azure deployment policy preserves the security and cache contract', async 
   const headersFor = (route) => config.routes.find((entry) => entry.route === route)?.headers;
   assert.deepEqual(headersFor('/assets/*'), { 'Cache-Control': 'public, max-age=31536000, immutable' });
   assert.deepEqual(headersFor('/sw.js'), { 'Cache-Control': 'no-cache' });
+});
+
+test('generated offline shell precaches only publicly served build assets', async () => {
+  const worker = await readFile(new URL('dist/site/sw.js', root), 'utf8');
+  const shellMatch = worker.match(/const SHELL = (\[[^;]+\]);/);
+  assert.ok(shellMatch, 'generated worker must declare its precache shell');
+  const shell = JSON.parse(shellMatch[1]);
+
+  assert.ok(shell.includes('/'), 'offline shell must include the app root');
+  assert.ok(shell.includes('/privacy/'));
+  assert.ok(shell.includes('/terms/'));
+  assert.ok(!shell.includes('/staticwebapp.config.json'), 'Azure deployment metadata is not publicly served');
+  assert.ok(!shell.includes('/_headers'), 'portable host metadata is not a runtime asset');
+  assert.ok(!shell.includes('/sw.js'), 'the worker must not precache itself');
+
+  for (const asset of shell.filter((entry) => entry !== '/' && !entry.endsWith('/'))) {
+    await access(new URL(`dist/site${asset}`, root));
+  }
 });

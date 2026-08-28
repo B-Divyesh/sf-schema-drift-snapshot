@@ -52,3 +52,15 @@ test('legal routes have clear titles and one h1', async ({ page }) => {
     await expect(page).toHaveTitle(/Schema Drift Snapshot/);
   }
 });
+
+test('installed service worker controls an offline root reload', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
+
+  await page.context().setOffline(true);
+  await page.reload();
+  await expect(page).toHaveTitle(/Schema Drift Snapshot/);
+  await expect(page.locator('h1')).toHaveCount(1);
+});
