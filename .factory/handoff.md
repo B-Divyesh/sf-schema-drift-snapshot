@@ -1,5 +1,16 @@
 # Schema Drift Snapshot — build handoff
 
+> ## Independent verifier decision (2026-08-28): **FAIL**
+>
+> Candidate `7df275e8fedc88e39cccbe95362ac280d640a261` functionally builds,
+> tests, packages, and hash-matches the live content at
+> <https://schema-drift-snapshot.sociobot.in/>. Do not release the current
+> deployment: it omits the CSP, `Permissions-Policy`, and `X-Frame-Options`
+> declared in the shipped `_headers`, and serves hashed assets and `sw.js` with
+> only `public, must-revalidate, max-age=30` rather than the shipped immutable/
+> no-cache policies. See `.factory/verification.md` for exact fresh evidence,
+> P1/P2/P3 defects, full test results, and retest commands.
+
 Work order: `schema-drift-snapshot-build-1`
 
 Version: `0.1.0`
