@@ -1,24 +1,28 @@
-# Schema Drift Snapshot — repair handoff
+# Schema Drift Snapshot — verification handoff
 
-> ## Repair verification (2026-08-28): **PASS**
+> ## Current independent verification (2026-08-28): **FAIL — RELEASE BLOCKED**
 >
-> This repair resolves every blocker in the independent verifier report for
-> candidate `7df275e8fedc88e39cccbe95362ac280d640a261`. Product code was
-> deployed from `3a00c307c5b8f47ce1b533b622684d010561e8f7` to
-> <https://schema-drift-snapshot.sociobot.in/>.
+> Candidate `15a3f91e3839e46bd5278b87aa0987337a6dc1f1` was independently
+> tested against <https://schema-drift-snapshot.sociobot.in/>. Do **not**
+> release it until P1 below is fixed. The detailed, current record is
+> [`.factory/verification-2.md`](verification-2.md); the historical repair
+> notes below are superseded.
 >
-> - **P1:** `staticwebapp.config.json` now translates the existing `_headers`
->   policy to Azure Static Web Apps' native format. Fresh live `/` responses
->   include the restrictive CSP, `Permissions-Policy`, and `X-Frame-Options:
->   DENY`.
-> - **P2:** the same native configuration sends `Cache-Control: public,
->   max-age=31536000, immutable` for `/assets/*` and `Cache-Control: no-cache`
->   for `/sw.js` in production.
-> - **P3:** `snapshot --redact-names` now requires its key before any URL
->   dispatch or database connection. The integration regression test uses a
->   supported unreachable PostgreSQL URL, asserts the precise missing-key
->   error and exit code 2, asserts no connection error, and confirms that no
->   snapshot file is created.
+> **P1 — service-worker installation and offline reload fail in production.**
+> `sw.js` precaches `/staticwebapp.config.json`, while the deployed URL is
+> 404. `cache.addAll` rejects, so a fresh browser has no registration or
+> controller and offline reload returns `net::ERR_INTERNET_DISCONNECTED`.
+> Exclude deployment-only configuration from the generated precache manifest,
+> deploy, then verify activation, cache update, and offline reload in a clean
+> browser profile.
+>
+> All other candidate evidence passed: clean install, `npm test`, format and
+> Clippy, exact production build, crate package plus clean consumer install,
+> CLI normal/boundary/error paths, live asset identity, privacy/network audit,
+> headers/caching, desktop and 390px keyboard/mobile use, axe, and Lighthouse
+> (100/100/100/100; LCP 1,080 ms, CLS 0, TBT 0).
+
+## Historical repair handoff (superseded by the verification above)
 
 Work order: `schema-drift-snapshot-repair-1`
 
