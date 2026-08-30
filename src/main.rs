@@ -2,6 +2,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::ExitCode,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use anyhow::{Context, Result};
@@ -34,6 +35,17 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Run the bundled sample in a temporary sandbox and write its review.
+    Demo {
+        /// Use this directory instead of creating a new temporary sandbox.
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+
+        /// Print a machine-readable command result to stdout.
+        #[arg(long)]
+        json: bool,
+    },
+
     /// Capture metadata through read-only PostgreSQL or MySQL catalog queries.
     Snapshot {
         /// Database URL. Supported schemes: postgres, postgresql, mysql.
@@ -100,6 +112,22 @@ enum Command {
     },
 }
 
+const DEMO_EXPECTED: &str = include_str!("../examples/fixtures/expected.sds.json");
+const DEMO_OBSERVED: &str = include_str!("../examples/fixtures/observed.sds.json");
+
+fn demo_directory(output: Option<PathBuf>) -> PathBuf {
+    output.unwrap_or_else(|| {
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis();
+        std::env::temp_dir().join(format!(
+            "schema-drift-snapshot-demo-{}-{timestamp}",
+            std::process::id()
+        ))
+    })
+}
+
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum RiskArg {
     Low,
@@ -136,6 +164,42 @@ fn load_review(before: &Path, after: &Path) -> Result<diff::Review> {
 
 fn run(cli: Cli) -> Result<u8> {
     match cli.command {
+        Command::Demo {
+            output,
+            json: as_json,
+        } => {
+            let directory = demo_directory(output);
+            fs::create_dir_all(&directory).with_context(|| {
+                format!("could not create demo sandbox {}", directory.display())
+            })?;
+            let before = directory.join("expected.sds.json");
+            let after = directory.join("observed.sds.json");
+            let review_path = directory.join("drift-review.md");
+            write_output(&before, DEMO_EXPECTED.as_bytes())?;
+            write_output(&after, DEMO_OBSERVED.as_bytes())?;
+            let review = load_review(&before, &after)?;
+            write_output(&review_path, report::markdown(&review).as_bytes())?;
+            if as_json {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&json!({
+                        "ok": true,
+                        "sandbox": directory,
+                        "review": review_path,
+                        "summary": review.summary
+                    }))?
+                );
+            } else {
+                println!("Demo — sample data, nothing is saved to your database.");
+                println!(
+                    "Wrote {} classified differences to {}",
+                    review.summary.total,
+                    review_path.display()
+                );
+                println!("Sandbox: {}", directory.display());
+            }
+            Ok(0)
+        }
         Command::Snapshot {
             url,
             output,
@@ -284,5 +348,11 @@ mod tests {
     fn snapshot_requires_a_url() {
         let cli = Cli::try_parse_from(["sds", "snapshot", "--output", "out.json"]);
         assert!(cli.is_err());
+    }
+
+    #[test]
+    fn cli_contract_parses_documented_demo() {
+        let cli = Cli::try_parse_from(["sds", "demo", "--json"]);
+        assert!(cli.is_ok());
     }
 }

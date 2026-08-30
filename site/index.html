@@ -4,9 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#f5f0e5">
-    <meta name="description" content="Capture PostgreSQL or MySQL schema metadata and turn production drift into a safe, human-reviewable incident report.">
-    <title>Schema Drift Snapshot — Explain database drift before repair</title>
+    <meta name="description" content="Compare PostgreSQL or MySQL schema metadata and explain production drift before repair.">
+    <link rel="canonical" href="https://schema-drift-snapshot.sociobot.in/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Schema Drift Snapshot — Explain database drift">
+    <meta property="og:description" content="Compare PostgreSQL or MySQL schema metadata and explain production drift before repair.">
+    <meta property="og:url" content="https://schema-drift-snapshot.sociobot.in/">
+    <meta property="og:image" content="https://schema-drift-snapshot.sociobot.in/assets/social-card.webp">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Schema Drift Snapshot — Explain database drift">
+    <meta name="twitter:description" content="Compare PostgreSQL or MySQL schema metadata and explain production drift before repair.">
+    <meta name="twitter:image" content="https://schema-drift-snapshot.sociobot.in/assets/social-card.webp">
+    <title>Schema Drift Snapshot — Explain database drift</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body>
@@ -19,26 +30,27 @@
       </a>
       <nav aria-label="Primary navigation">
         <a href="#workflow">Workflow</a>
-        <a href="#demo">Local demo</a>
+        <a href="/demo/">Demo</a>
         <a href="#pricing">Pricing</a>
         <a href="https://github.com/B-Divyesh/sf-schema-drift-snapshot">Source</a>
       </nav>
     </header>
 
-    <main id="main">
+    <main id="main" tabindex="-1">
       <section class="hero" aria-labelledby="hero-title">
         <div class="hero-copy">
           <p class="eyebrow"><span aria-hidden="true">●</span> Read-only schema incident review</p>
-          <h1 id="hero-title">See what drifted.<br><em>Repair nothing yet.</em></h1>
-          <p class="lede">Turn PostgreSQL or MySQL catalog differences into a review your team can reason about—destructive risk, ORM blind spots, and likely ownership included.</p>
+          <h1 id="hero-title">Explain database drift before repair</h1>
+          <p class="lede">For developers reviewing PostgreSQL, MySQL, and ORM migrations before anyone changes production.</p>
           <div class="hero-actions">
-            <a class="button primary" href="#install">Install the CLI</a>
-            <a class="button secondary" href="#demo">Try the local demo</a>
+            <a class="button primary" href="/demo/">Try it with sample data</a>
+            <a class="button secondary" href="#install">Install the CLI</a>
+            <p class="action-note">Loads two sample snapshots and a classified review.</p>
           </div>
           <ul class="trust-line" aria-label="Product boundaries">
-            <li>No row data</li>
-            <li>No repair SQL</li>
-            <li>No schema upload</li>
+            <li>Reads catalog metadata, not rows</li>
+            <li>Works offline after the first visit</li>
+            <li>Free core · $49 optional CI policy</li>
           </ul>
         </div>
         <figure class="hero-figure">
@@ -56,8 +68,8 @@
 
       <section class="workflow section" id="workflow" aria-labelledby="workflow-title">
         <div class="section-intro">
-          <p class="kicker">A calmer incident path</p>
-          <h2 id="workflow-title">Three artifacts. One decision.</h2>
+          <p class="kicker">Three-step workflow</p>
+          <h2 id="workflow-title">How schema comparison works</h2>
           <p>The CLI stays outside your migration framework. It gathers metadata, labels the gap, and stops before a repair becomes executable.</p>
         </div>
         <ol class="steps">
@@ -86,17 +98,21 @@
           <div class="terminal-label"><span>shell</span><button class="copy-button" type="button" data-copy="cargo install --git https://github.com/B-Divyesh/sf-schema-drift-snapshot --bin sds" aria-label="Copy install command">Copy</button></div>
           <pre><code>cargo install --git https://github.com/B-Divyesh/sf-schema-drift-snapshot --bin sds</code></pre>
           <hr>
-          <pre><code><span class="prompt">$</span> sds snapshot --url "$DATABASE_URL" --output prod.json
-<span class="prompt">$</span> sds compare --before expected.json --after prod.json --output review.md
-Wrote 6 classified differences to review.md</code></pre>
+          <pre><code><span class="prompt">$</span> sds demo
+Demo — sample data, nothing is saved to your database.
+Wrote 5 classified differences to /tmp/.../drift-review.md</code></pre>
+          <figure class="terminal-recording">
+            <img src="/assets/sds-demo-terminal.svg" width="760" height="280" loading="lazy" alt="Terminal recording of the sds demo command writing a five-difference Markdown review.">
+            <figcaption>Recorded from the real binary with the bundled sample.</figcaption>
+          </figure>
         </div>
       </section>
 
-      <section class="demo section" id="demo" aria-labelledby="demo-title">
+      <section class="demo section" id="browser-preview" aria-labelledby="demo-title">
         <div class="section-intro">
           <p class="kicker">Browser-local sample</p>
-          <h2 id="demo-title">Open the layers yourself</h2>
-          <p>These are small SDS snapshots. Edit either one, then compare. Input stays in this tab and is never sent anywhere.</p>
+          <h2 id="demo-title">Compare snapshots in your browser</h2>
+          <p>Edit either sample snapshot, then compare it. The browser sends no snapshot text over the network.</p>
         </div>
         <div class="demo-workbench">
           <div class="snapshot-inputs">
@@ -108,7 +124,7 @@ Wrote 6 classified differences to review.md</code></pre>
           <div class="demo-controls">
             <button class="button primary" id="compare-button" type="button">Compare locally</button>
             <button class="text-button" id="reset-demo" type="button">Reset sample</button>
-            <span class="local-note"><i aria-hidden="true"></i> Never uploaded</span>
+            <span class="local-note"><i aria-hidden="true"></i> Snapshot text stays in this tab</span>
           </div>
           <div class="review-sheet" aria-live="polite" aria-atomic="false">
             <div class="review-empty" id="review-empty">
@@ -129,7 +145,7 @@ Wrote 6 classified differences to review.md</code></pre>
       <section class="classification section" aria-labelledby="classification-title">
         <div class="section-intro">
           <p class="kicker">Classification vocabulary</p>
-          <h2 id="classification-title">Built for the awkward boundary</h2>
+          <h2 id="classification-title">How differences are classified</h2>
         </div>
         <div class="legend-grid">
           <article><span class="risk-tab high">High risk</span><h3>Destructive</h3><p>Removed tables or columns, stricter nullability, and changed types get an explicit stop-and-review signal.</p></article>
@@ -142,13 +158,13 @@ Wrote 6 classified differences to review.md</code></pre>
         <div class="price-sheet">
           <div>
             <p class="kicker">One-time team tool</p>
-            <h2 id="pricing-title">Keep the review free.<br>Unlock CI policy for $49.</h2>
+            <h2 id="pricing-title">Keep reviews free.<br>Add CI policy for $49.</h2>
             <p>Every developer gets capture, redaction, classification, ownership guidance, Markdown, and JSON. Pro adds configurable CI risk gates for one team.</p>
           </div>
           <div class="price-action">
             <p class="price"><span>$</span>49 <small>one time</small></p>
-            <a class="button primary" href="https://api.sociobot.in/api/v1/products/schema-drift-snapshot/checkout">Buy Pro through Sociobot</a>
-            <p class="merchant-note">Sociobot / Dodo is the merchant of record. Refunds revoke the associated license.</p>
+            <span class="button unavailable" role="status">Checkout not open yet</span>
+            <p class="merchant-note">Factory billing registration must finish before sales open. Existing licenses can still be restored below.</p>
           </div>
           <form id="license-form" class="restore-form">
             <label for="license-token">Already bought it? Restore on this device</label>
@@ -162,14 +178,14 @@ Wrote 6 classified differences to review.md</code></pre>
       <section class="closing section" aria-labelledby="closing-title">
         <div class="closing-cut" aria-hidden="true"></div>
         <p class="kicker">Before the migration window</p>
-        <h2 id="closing-title">Make drift reviewable.<br>Keep repair deliberate.</h2>
+        <h2 id="closing-title">Review drift before changing production</h2>
         <a class="button primary" href="#install">Install Schema Drift Snapshot</a>
       </section>
     </main>
 
     <footer>
       <a class="wordmark" href="/"><span class="wordmark-mark" aria-hidden="true"><i></i><i></i></span><span>schema / drift</span></a>
-      <p>Local-first database incident review. MIT-licensed core.</p>
+      <p>Local database drift review. MIT-licensed core.<br>Built by Param Factory · v0.1.0 · build <span data-build-id>local</span></p>
       <nav aria-label="Legal navigation"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-schema-drift-snapshot">GitHub</a></nav>
     </footer>
   </body>

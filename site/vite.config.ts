@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,6 +7,13 @@ import { defineConfig, type Plugin } from 'vite';
 
 const siteRoot = fileURLToPath(new URL('.', import.meta.url));
 const outputRoot = path.resolve(siteRoot, '../dist/site');
+const buildId = (() => {
+  try {
+    return execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: path.resolve(siteRoot, '..'), encoding: 'utf8' }).trim();
+  } catch {
+    return 'local';
+  }
+})();
 // These files configure a static host; Azure deliberately does not expose its
 // configuration file as a public asset. Keep them out of the offline shell so
 // one deployment target cannot make service-worker installation fail.
@@ -29,7 +37,7 @@ function offlineShell(): Plugin {
         .filter((file) => !deploymentMetadata.has(file) && !file.endsWith('.map'))
         .sort();
       const version = createHash('sha256').update(files.join('\n')).digest('hex').slice(0, 12);
-      const shell = [...new Set(['/', '/privacy/', '/terms/', ...files])];
+      const shell = [...new Set(['/', '/demo/', '/privacy/', '/terms/', ...files])];
       const worker = `const CACHE = 'sds-${version}';\nconst SHELL = ${JSON.stringify(shell)};\nself.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting())));\nself.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('sds-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));\nself.addEventListener('fetch', event => { if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return; event.respondWith(caches.match(event.request).then(hit => hit || fetch(event.request).then(response => { const copy = response.clone(); caches.open(CACHE).then(cache => cache.put(event.request, copy)); return response; }).catch(() => caches.match('/index.html')))); });\n`;
       await fs.writeFile(path.join(outputRoot, 'sw.js'), worker);
     },
@@ -48,10 +56,15 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.join(siteRoot, 'index.html'),
+        demo: path.join(siteRoot, 'demo/index.html'),
+        notFound: path.join(siteRoot, '404.html'),
         privacy: path.join(siteRoot, 'privacy/index.html'),
         terms: path.join(siteRoot, 'terms/index.html'),
       },
     },
+  },
+  define: {
+    __SDS_BUILD_ID__: JSON.stringify(buildId),
   },
   plugins: [offlineShell()],
 });

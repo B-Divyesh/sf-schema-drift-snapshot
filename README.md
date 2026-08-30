@@ -18,6 +18,23 @@ sds --help
 Prebuilt archives can be attached to GitHub releases by the factory. This
 worker does not publish packages or releases.
 
+## Try the bundled sample
+
+Run the real binary with no database or account:
+
+```sh
+sds demo
+```
+
+The command copies two realistic PostgreSQL snapshots into a new temporary
+directory. It writes a Markdown review with five classified differences and
+prints the sandbox path. Use `--output <directory>` when you want a known
+location, or `--json` for a machine-readable result.
+
+The browser version is at
+<https://schema-drift-snapshot.sociobot.in/demo/>. It opens with a separate
+four-change sample review and never reads or writes production data.
+
 ## Usage
 
 Capture each environment with a read-only database role:
@@ -69,8 +86,9 @@ The free CLI includes live capture, redaction, complete classification,
 ownership guidance, Markdown reports, and JSON export. A one-time Pro license
 adds configurable policy-based CI gates. Set `SDS_LICENSE` or pass
 `--license`; verification is cached for one day and never blocks the free
-workflow. Buy and restore links live on the product site. Safety behavior and
-core exports are never gated.
+workflow. License restore lives on the product site. Checkout remains closed
+until the factory registers this product with the Sociobot billing service.
+Safety behavior and core exports are never gated.
 
 ## Snapshot format
 
@@ -92,7 +110,7 @@ The documented command examples and snapshot decoder are covered by tests.
 ## Develop and verify
 
 ```sh
-npm install
+npm ci
 npm test                 # Rust tests + site tests
 npm run build            # release binary + site -> dist/
 npm run build:site       # static site only -> dist/site/
@@ -117,6 +135,8 @@ an incomplete-capture error instead of writing blank view definitions.
 
 The landing/docs site is Vite + vanilla TypeScript. It does not receive or
 upload schema text; the interactive sample runs entirely in the browser.
+Every user-facing product claim and its exact test command is listed in
+`.factory/claims.json`.
 
 ## Deploy
 

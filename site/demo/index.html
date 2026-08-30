@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f0e5">
+    <meta name="description" content="Compare two sample database snapshots in a browser-only sandbox.">
+    <link rel="canonical" href="https://schema-drift-snapshot.sociobot.in/demo/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Demo — Schema Drift Snapshot">
+    <meta property="og:description" content="Compare two sample database snapshots in a browser-only sandbox.">
+    <meta property="og:url" content="https://schema-drift-snapshot.sociobot.in/demo/">
+    <meta property="og:image" content="https://schema-drift-snapshot.sociobot.in/assets/social-card.webp">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Demo — Schema Drift Snapshot">
+    <meta name="twitter:description" content="Compare two sample database snapshots in a browser-only sandbox.">
+    <meta name="twitter:image" content="https://schema-drift-snapshot.sociobot.in/assets/social-card.webp">
+    <title>Demo — Schema Drift Snapshot</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body data-demo-page>
+    <a class="skip-link" href="#main">Skip to main content</a>
+    <div class="offline-strip" role="status" hidden>Offline — this sample still runs locally.</div>
+    <aside class="demo-banner" aria-label="Demo mode">
+      <strong>Demo — sample data, nothing is saved</strong>
+      <div><button class="text-button" type="button" data-reset-demo>Reset demo</button><a href="/#install">Start for real</a></div>
+    </aside>
+    <header class="site-header">
+      <a class="wordmark" href="/" aria-label="Schema Drift Snapshot home"><span class="wordmark-mark" aria-hidden="true"><i></i><i></i></span><span>schema / drift</span></a>
+      <nav aria-label="Primary navigation"><a href="/demo/" aria-current="page">Demo</a><a href="/#workflow">Workflow</a><a href="/#pricing">Pricing</a><a href="https://github.com/B-Divyesh/sf-schema-drift-snapshot">Source</a></nav>
+    </header>
+    <main id="main" class="demo-page" tabindex="-1">
+      <section class="demo-intro" aria-labelledby="demo-page-title">
+        <p class="eyebrow"><span aria-hidden="true">●</span> Browser-only sample</p>
+        <h1 id="demo-page-title" tabindex="-1">Compare sample database drift</h1>
+        <p class="lede">Edit two realistic PostgreSQL snapshots and inspect the classified changes. Nothing here reaches your database.</p>
+      </section>
+      <section class="demo demo-route" aria-label="Sample snapshot comparison">
+        <div class="demo-workbench">
+          <div class="snapshot-inputs">
+            <label for="before-snapshot"><span>Expected snapshot</span><small>before · staging</small></label>
+            <textarea id="before-snapshot" spellcheck="false" autocomplete="off"></textarea>
+            <label for="after-snapshot"><span>Observed snapshot</span><small>after · production</small></label>
+            <textarea id="after-snapshot" spellcheck="false" autocomplete="off"></textarea>
+          </div>
+          <div class="demo-controls">
+            <button class="button primary" id="compare-button" type="button">Compare locally</button>
+            <button class="text-button" type="button" data-reset-demo>Reset sample</button>
+            <span class="local-note"><i aria-hidden="true"></i> Snapshot text stays in this tab</span>
+          </div>
+          <div class="review-sheet" aria-live="polite" aria-atomic="false">
+            <div class="review-empty" id="review-empty" hidden><h2>Sample ready</h2><p>Run the comparison to restore the review.</p></div>
+            <div id="review-error" class="review-error" role="alert" hidden></div>
+            <div id="review-result" hidden>
+              <div class="review-heading"><div><p class="kicker">Review snapshot</p><h2 id="review-summary">Drift found</h2></div><p id="review-counts"></p></div>
+              <ul class="change-list" id="change-list"></ul>
+              <p class="safety-note"><strong>Repair boundary:</strong> this output explains drift. It does not generate or execute a migration.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <a class="wordmark" href="/"><span class="wordmark-mark" aria-hidden="true"><i></i><i></i></span><span>schema / drift</span></a>
+      <p>Demo sample only; no data is saved.<br>Built by Param Factory · v0.1.0 · build <span data-build-id>local</span></p>
+      <nav aria-label="Legal navigation"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-schema-drift-snapshot">GitHub</a></nav>
+    </footer>
+  </body>
+</html>

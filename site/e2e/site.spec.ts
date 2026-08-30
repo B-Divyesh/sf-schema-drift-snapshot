@@ -17,7 +17,7 @@ test('landing page is accessible and the local review classifies drift', async (
 });
 
 test('invalid input has a useful announced error and keyboard reset works', async ({ page }) => {
-  await page.goto('/#demo');
+  await page.goto('/#browser-preview');
   await page.locator('#before-snapshot').fill('{oops');
   await page.locator('#compare-button').focus();
   await page.keyboard.press('Enter');
@@ -45,12 +45,47 @@ test('mobile layout has no page-level horizontal overflow', async ({ page }, tes
   await expect(page.locator('.hero-actions .button')).toHaveCount(2);
 });
 
+test('mobile layout has no horizontal overflow at 200 percent text size', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile');
+  await page.goto('/');
+  await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
+  const widths = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+  expect(widths.scroll).toBeLessThanOrEqual(widths.client + 1);
+  await expect(page.getByRole('link', { name: 'Try it with sample data' })).toBeVisible();
+});
+
+test('demo route opens in the sample sandbox with route metadata', async ({ page }) => {
+  await page.goto('/demo/');
+  await expect(page).toHaveTitle('Demo — Schema Drift Snapshot');
+  await expect(page.locator('main h1')).toHaveText('Compare sample database drift');
+  await expect(page.locator('.demo-banner')).toContainText('Demo — sample data, nothing is saved');
+  await expect(page.locator('#review-summary')).toContainText('4 differences');
+});
+
 test('legal routes have clear titles and one h1', async ({ page }) => {
   for (const route of ['/privacy/', '/terms/']) {
     await page.goto(route);
     await expect(page.locator('main h1')).toHaveCount(1);
     await expect(page).toHaveTitle(/Schema Drift Snapshot/);
   }
+});
+
+test('all public page types have no serious accessibility findings', async ({ page }) => {
+  for (const route of ['/', '/demo/', '/privacy/', '/terms/', '/404.html']) {
+    await page.goto(route);
+    const accessibility = await new AxeBuilder({ page }).analyze();
+    expect(accessibility.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? '')), route).toEqual([]);
+  }
+});
+
+test('skip link is first, visibly focused, and moves focus to main', async ({ page }) => {
+  await page.goto('/');
+  await page.keyboard.press('Tab');
+  await expect(page.locator('.skip-link')).toBeFocused();
+  const outline = await page.locator('.skip-link').evaluate((element) => getComputedStyle(element).outlineStyle);
+  expect(outline).toBe('solid');
+  await page.keyboard.press('Enter');
+  await expect(page.locator('main')).toBeFocused();
 });
 
 test('footer links meet the 44 by 44 CSS pixel target contract', async ({ page }) => {

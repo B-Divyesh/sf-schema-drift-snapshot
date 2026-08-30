@@ -80,3 +80,9 @@ illustration, clean negative space.” Model/deployment metadata is stored besid
 the generated source during production; the optimized WebP is the shipped
 original asset. License: project-owned generated work. All icons are original
 inline CSS/SVG geometric marks derived from catalog columns; no stock assets.
+
+`site/public/assets/social-card.webp` is a locally cropped 1200 × 630 derivative
+of the same project-owned diorama. `site/public/apple-touch-icon.png` and
+`site/public/assets/sds-demo-terminal.svg` were drawn locally from the product's
+paper-layer geometry and palette on 2026-08-30. The terminal SVG records the
+real `sds demo` output; it is redundant to the adjacent selectable HTML copy.

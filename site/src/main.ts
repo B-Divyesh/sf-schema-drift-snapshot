@@ -1,5 +1,7 @@
 import './style.css';
 
+declare const __SDS_BUILD_ID__: string;
+
 type Details = Record<string, unknown>;
 type SchemaObject = { kind: string; schema: string; table?: string; name: string; details?: Details };
 type Snapshot = { schema_version: number; dialect: string; captured_at: string; objects: SchemaObject[] };
@@ -10,6 +12,7 @@ const API_BASE = 'https://api.sociobot.in';
 const LICENSE_KEY = `sb_license:${PRODUCT}`;
 const VERDICT_KEY = `sb_license_verdict:${PRODUCT}`;
 const DAY_MS = 86_400_000;
+const isDemoRoute = document.body.hasAttribute('data-demo-page');
 
 const expected: Snapshot = {
   schema_version: 1,
@@ -129,7 +132,7 @@ function renderReview(changes: ReviewChange[]): void {
     const badge = document.createElement('span');
     badge.className = `risk-tab ${change.risk}`;
     badge.textContent = `${change.risk} risk`;
-    const title = document.createElement('h4');
+    const title = document.createElement('h3');
     title.textContent = `${change.title} · ${change.object}`;
     const explanation = document.createElement('p');
     explanation.textContent = change.explanation;
@@ -145,12 +148,13 @@ function renderReview(changes: ReviewChange[]): void {
   }
 }
 
-function resetDemo(): void {
+function resetDemo(showSampleReview = isDemoRoute): void {
   if (beforeInput) beforeInput.value = JSON.stringify(expected, null, 2);
   if (afterInput) afterInput.value = JSON.stringify(observed, null, 2);
-  if (emptyState) emptyState.hidden = false;
+  if (emptyState) emptyState.hidden = showSampleReview;
   if (errorState) errorState.hidden = true;
   if (resultState) resultState.hidden = true;
+  if (showSampleReview) renderReview(compareSnapshots(expected, observed));
 }
 
 document.querySelector('#compare-button')?.addEventListener('click', () => {
@@ -160,7 +164,9 @@ document.querySelector('#compare-button')?.addEventListener('click', () => {
     showError(error instanceof Error ? error.message : 'The comparison could not be completed.');
   }
 });
-document.querySelector('#reset-demo')?.addEventListener('click', resetDemo);
+document.querySelectorAll<HTMLElement>('[data-reset-demo], #reset-demo').forEach((button) => {
+  button.addEventListener('click', () => resetDemo());
+});
 resetDemo();
 
 document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => {
@@ -203,7 +209,7 @@ async function verifyLicense(token: string): Promise<void> {
     const verdict = { valid: result.valid, reason: result.reason, checkedAt: Date.now() };
     localStorage.setItem(VERDICT_KEY, JSON.stringify(verdict));
     if (result.valid) showLicense(true, 'Pro is unlocked on this device.');
-    else showLicense(false, `License no longer active (${result.reason}). You can buy a new license above.`);
+    else showLicense(false, `License no longer active (${result.reason}). Checkout is closed; restore a different license below.`);
   } catch {
     const cached = readVerdict();
     showLicense(cached?.valid === true, cached?.valid ? 'Could not refresh the license; using the last valid verdict.' : 'Could not reach license verification. Your free tools remain available.');
@@ -223,6 +229,7 @@ function startLicense(): void {
   if (!token) return;
   const verdict = readVerdict();
   if (verdict?.valid) showLicense(true, 'Pro unlocked from your verified license.');
+  else if (verdict) showLicense(false, `License no longer active (${verdict.reason}). Checkout is closed; restore a different license below.`);
   if (returnedLicense || !verdict || Date.now() - verdict.checkedAt >= DAY_MS) void verifyLicense(token);
 }
 
@@ -235,7 +242,11 @@ document.querySelector<HTMLFormElement>('#license-form')?.addEventListener('subm
   if (input) input.value = '';
   void verifyLicense(token);
 });
-startLicense();
+if (!isDemoRoute) startLicense();
+
+document.querySelectorAll<HTMLElement>('[data-build-id]').forEach((element) => {
+  element.textContent = __SDS_BUILD_ID__;
+});
 
 const offlineStrip = document.querySelector<HTMLElement>('.offline-strip');
 function updateNetworkState(): void { if (offlineStrip) offlineStrip.hidden = navigator.onLine; }

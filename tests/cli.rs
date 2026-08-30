@@ -21,6 +21,24 @@ fn documented_compare_returns_classified_json() {
 }
 
 #[test]
+fn demo_command_writes_the_bundled_sample_to_an_isolated_directory() {
+    let sandbox = tempfile::tempdir().unwrap();
+    let output = sandbox.path().join("sample-run");
+    cargo_bin_cmd!("sds")
+        .args(["demo", "--output", output.to_str().unwrap(), "--json"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"total\": 5"))
+        .stdout(predicate::str::contains("\"sandbox\""));
+
+    let report = fs::read_to_string(output.join("drift-review.md")).unwrap();
+    assert!(report.contains("**5** total differences"));
+    assert!(report.contains("no executable repair SQL"));
+    assert!(output.join("expected.sds.json").is_file());
+    assert!(output.join("observed.sds.json").is_file());
+}
+
+#[test]
 fn markdown_review_never_contains_repair_sql() {
     cargo_bin_cmd!("sds")
         .args(["compare", "--before", EXPECTED, "--after", OBSERVED])

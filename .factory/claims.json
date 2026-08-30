@@ -1,0 +1,121 @@
+[
+  {
+    "id": "cli-demo",
+    "claim": "sds demo runs the bundled sample in an isolated directory and writes a five-change review.",
+    "where": "README demo section, landing terminal recording",
+    "test": "node --test --test-name-pattern='@claim:cli-demo' site/tests/claims.test.mjs",
+    "sandbox": "fresh temporary directory; invoke the real CLI; assert fixture and review files plus exact summary"
+  },
+  {
+    "id": "sample-review",
+    "claim": "The one-click browser demo opens with a four-change classified sample review.",
+    "where": "landing primary action, /demo/",
+    "test": "npm run test:claims -- --grep '@claim:sample-review'",
+    "sandbox": "fresh Chromium context at /demo/; assert banner, initial review, change count, and reset"
+  },
+  {
+    "id": "catalog-only-capture",
+    "claim": "Database capture enters a read-only session and queries schema catalogs rather than row data.",
+    "where": "landing facts, CLI help, README, privacy page",
+    "test": "node --test --test-name-pattern='@claim:catalog-only-capture' site/tests/claims.test.mjs",
+    "sandbox": "inspect the shipped capture implementation for both read-only session commands, catalog sources, and absence of row writes"
+  },
+  {
+    "id": "no-repair-sql",
+    "claim": "The review explains differences without emitting executable repair SQL.",
+    "where": "landing facts and workflow, CLI help, README, terms page",
+    "test": "node --test --test-name-pattern='@claim:no-repair-sql' site/tests/claims.test.mjs",
+    "sandbox": "run sds demo in a fresh temporary directory and scan the generated review for executable SQL statements"
+  },
+  {
+    "id": "review-formats",
+    "claim": "The free comparison writes Markdown and returns JSON classifications.",
+    "where": "landing pricing, README usage",
+    "test": "node --test --test-name-pattern='@claim:review-formats' site/tests/claims.test.mjs",
+    "sandbox": "run the real CLI against shipped sample snapshots; parse JSON and inspect the Markdown file"
+  },
+  {
+    "id": "deterministic-redaction",
+    "claim": "A shared redaction key replaces names and definitions with stable local hashes.",
+    "where": "landing workflow, README usage, privacy page",
+    "test": "node --test --test-name-pattern='@claim:deterministic-redaction' site/tests/claims.test.mjs",
+    "sandbox": "run the focused Rust redaction regression and assert identical output with raw identifiers absent"
+  },
+  {
+    "id": "browser-demo-local",
+    "claim": "The browser demo keeps snapshot text in the tab and sends it to no external service.",
+    "where": "landing browser preview, /demo/, privacy page",
+    "test": "npm run test:claims -- --grep '@claim:browser-demo-local'",
+    "sandbox": "fresh Chromium context; edit both snapshots, compare, and record every outgoing request"
+  },
+  {
+    "id": "offline-reload",
+    "claim": "The site and sample demo reopen offline after the first visit.",
+    "where": "offline notice, privacy page, README",
+    "test": "npm run test:claims -- --grep '@claim:offline-reload'",
+    "sandbox": "dedicated fresh browser context; install worker, go offline, reload /demo/, and assert the working result"
+  },
+  {
+    "id": "daily-license-check",
+    "claim": "A stored license verdict is checked at most once per day, and an invalid notice remains visible.",
+    "where": "pricing restore flow, privacy page, README",
+    "test": "npm run test:claims -- --grep '@claim:daily-license-check'",
+    "sandbox": "fresh browser storage with a mocked invalid Sociobot response; reload and assert one request plus persistent notice"
+  },
+  {
+    "id": "no-analytics",
+    "claim": "The site uses no analytics or tracking requests.",
+    "where": "privacy page",
+    "test": "npm run test:claims -- --grep '@claim:no-analytics'",
+    "sandbox": "fresh Chromium context; record all requests during the complete /demo/ flow and inspect loaded scripts"
+  },
+  {
+    "id": "cli-no-telemetry",
+    "claim": "The CLI contains no telemetry client.",
+    "where": "landing facts, README, privacy page",
+    "test": "node --test --test-name-pattern='@claim:cli-no-telemetry' site/tests/claims.test.mjs",
+    "sandbox": "inspect the shipped Rust manifest and complete source set for telemetry or analytics integration"
+  },
+  {
+    "id": "free-compare-needs-no-license",
+    "claim": "Free snapshot comparison works without a license.",
+    "where": "pricing, terms, README",
+    "test": "node --test --test-name-pattern='@claim:free-compare-needs-no-license' site/tests/claims.test.mjs",
+    "sandbox": "invoke the real compare command on shipped samples with no license and parse its result"
+  },
+  {
+    "id": "price-copy",
+    "claim": "Pro CI policy costs $49 as a one-time purchase.",
+    "where": "landing facts and pricing, terms page",
+    "test": "npm run test:claims -- --grep '@claim:price-copy'",
+    "sandbox": "fresh root and terms routes; assert the exact amount and purchase type match"
+  },
+  {
+    "id": "database-url-support",
+    "claim": "Snapshot capture accepts postgres://, postgresql://, and mysql:// database URLs.",
+    "where": "README usage",
+    "test": "node --test --test-name-pattern='@claim:database-url-support' site/tests/claims.test.mjs",
+    "sandbox": "run the focused dialect parser regression for every documented scheme and an unsupported scheme"
+  },
+  {
+    "id": "credential-hygiene",
+    "claim": "Database URLs and credentials are not written into snapshot documents.",
+    "where": "README privacy section, privacy page",
+    "test": "node --test --test-name-pattern='@claim:credential-hygiene' site/tests/claims.test.mjs",
+    "sandbox": "inspect the shipped snapshot schema and capture boundary; assert no credential field or URL-derived source"
+  },
+  {
+    "id": "cli-exit-codes",
+    "claim": "The CLI returns documented non-interactive exit codes 0, 1, 2, and 3 for automation.",
+    "where": "README usage",
+    "test": "node --test --test-name-pattern='@claim:cli-exit-codes' site/tests/claims.test.mjs",
+    "sandbox": "fresh temporary config; invoke real success, input-error, unlicensed, and licensed-threshold paths"
+  },
+  {
+    "id": "pro-ci-policy",
+    "claim": "Pro verifies a license and applies the configured CI risk threshold.",
+    "where": "landing pricing, README Free and Pro, terms page",
+    "test": "node --test --test-name-pattern='@claim:pro-ci-policy' site/tests/claims.test.mjs",
+    "sandbox": "run the real check command against bundled samples and a local recorded valid-license response"
+  }
+]
