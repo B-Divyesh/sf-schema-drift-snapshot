@@ -101,6 +101,17 @@ cargo clippy --all-targets -- -D warnings
 cargo package --allow-dirty
 ```
 
+To run the PostgreSQL privilege-boundary regression, point the suite at a
+disposable database whose test role can create and remove roles:
+
+```sh
+SDS_TEST_POSTGRES_ADMIN_URL="postgresql://test-admin:password@127.0.0.1/test-db?sslmode=disable" cargo test --test postgres_read_only
+```
+
+The test creates a view as the admin, captures it through a separate
+SELECT-only role, changes only its predicate, and requires one ORM-invisible
+difference. It also proves that the capture role cannot insert row data.
+
 The landing/docs site is Vite + vanilla TypeScript. It does not receive or
 upload schema text; the interactive sample runs entirely in the browser.
 

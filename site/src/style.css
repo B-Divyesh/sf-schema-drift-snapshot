@@ -45,7 +45,7 @@ em { color: var(--coral-deep); font-weight: 500; }
 .wordmark-mark i { position: absolute; width: 26px; height: 20px; border: 2px solid var(--ink); background: var(--paper); transform: skewY(-5deg); }
 .wordmark-mark i:last-child { right: 0; bottom: 0; border-color: var(--coral-deep); }
 .site-header nav, footer nav { display: flex; align-items: center; gap: 28px; }
-.site-header nav a, footer nav a { display: grid; min-height: 44px; place-items: center; color: var(--muted); font-size: .82rem; font-weight: 700; text-decoration: none; }
+.site-header nav a, footer nav a { display: grid; min-width: 44px; min-height: 44px; place-items: center; color: var(--muted); font-size: .82rem; font-weight: 700; text-decoration: none; }
 .site-header nav a:hover, footer nav a:hover { color: var(--blue-deep); text-decoration: underline; }
 
 .hero { display: grid; width: min(100% - 48px, 1240px); min-height: 720px; margin-inline: auto; padding: 80px 0 96px; align-items: center; grid-template-columns: minmax(0, .88fr) minmax(420px, 1.12fr); gap: 64px; }

@@ -53,6 +53,19 @@ test('legal routes have clear titles and one h1', async ({ page }) => {
   }
 });
 
+test('footer links meet the 44 by 44 CSS pixel target contract', async ({ page }) => {
+  await page.goto('/');
+  const targets = await page.locator('footer a').evaluateAll((links) => links.map((link) => {
+    const box = link.getBoundingClientRect();
+    return { label: link.textContent?.trim(), width: box.width, height: box.height };
+  }));
+
+  for (const target of targets) {
+    expect(target.width, `${target.label} width`).toBeGreaterThanOrEqual(44);
+    expect(target.height, `${target.label} height`).toBeGreaterThanOrEqual(44);
+  }
+});
+
 test('installed service worker controls an offline root reload', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => navigator.serviceWorker.ready);

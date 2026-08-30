@@ -52,10 +52,17 @@ fn details(entries: impl IntoIterator<Item = (&'static str, Value)>) -> BTreeMap
         .collect()
 }
 
-const POSTGRES_CATALOG_OBJECTS_QUERY: &str = "SELECT tables.table_schema, tables.table_name, tables.table_type, views.view_definition \
+const POSTGRES_CATALOG_OBJECTS_QUERY: &str = "SELECT tables.table_schema, tables.table_name, tables.table_type, \
+       CASE WHEN tables.table_type = 'VIEW' \
+            THEN pg_catalog.pg_get_viewdef(classes.oid, true) \
+            ELSE NULL END AS view_definition \
      FROM information_schema.tables AS tables \
-     LEFT JOIN information_schema.views AS views \
-       ON views.table_schema = tables.table_schema AND views.table_name = tables.table_name \
+     LEFT JOIN pg_catalog.pg_namespace AS namespaces \
+       ON namespaces.nspname = tables.table_schema \
+     LEFT JOIN pg_catalog.pg_class AS classes \
+       ON classes.relnamespace = namespaces.oid \
+      AND classes.relname = tables.table_name \
+      AND classes.relkind = 'v' \
      WHERE tables.table_schema NOT IN ('pg_catalog', 'information_schema') \
      ORDER BY tables.table_schema, tables.table_name";
 
@@ -74,27 +81,32 @@ fn catalog_object(
     name: String,
     table_type: String,
     view_definition: Option<String>,
-) -> SchemaObject {
+) -> Result<SchemaObject> {
     let kind = if table_type.contains("VIEW") {
         ObjectKind::View
     } else {
         ObjectKind::Table
     };
     let details = if kind == ObjectKind::View {
+        let definition = view_definition.ok_or_else(|| {
+            anyhow::anyhow!(
+                "incomplete catalog capture: could not read the definition for view {schema}.{name}; grant the read-only role access to that view and retry"
+            )
+        })?;
         details([
             ("table_type", json!(table_type)),
-            ("definition", json!(view_definition)),
+            ("definition", json!(definition)),
         ])
     } else {
         details([("table_type", json!(table_type))])
     };
-    SchemaObject {
+    Ok(SchemaObject {
         kind,
         schema,
         table: None,
         name,
         details,
-    }
+    })
 }
 
 fn capture_postgres(url: &str, schemas: &[String]) -> Result<Vec<SchemaObject>> {
@@ -117,7 +129,7 @@ fn capture_postgres(url: &str, schemas: &[String]) -> Result<Vec<SchemaObject>> 
         if !keep_schema(&schema, &allow) {
             continue;
         }
-        objects.push(catalog_object(schema, row.get(1), row.get(2), row.get(3)));
+        objects.push(catalog_object(schema, row.get(1), row.get(2), row.get(3))?);
     }
 
     let column_rows = client.query(
@@ -215,7 +227,7 @@ fn capture_mysql(url: &str, schemas: &[String]) -> Result<Vec<SchemaObject>> {
         if !keep_schema(&schema, &allow) {
             continue;
         }
-        objects.push(catalog_object(schema, name, table_type, view_definition));
+        objects.push(catalog_object(schema, name, table_type, view_definition)?);
     }
 
     type MySqlColumn = (String, String, String, u32, String, String, Option<String>);
@@ -322,12 +334,15 @@ mod tests {
             source: "catalog test".to_owned(),
             redacted: false,
             redaction_key_id: None,
-            objects: vec![catalog_object(
-                "app".to_owned(),
-                "active_accounts".to_owned(),
-                "VIEW".to_owned(),
-                Some(definition.to_owned()),
-            )],
+            objects: vec![
+                catalog_object(
+                    "app".to_owned(),
+                    "active_accounts".to_owned(),
+                    "VIEW".to_owned(),
+                    Some(definition.to_owned()),
+                )
+                .unwrap(),
+            ],
         }
     }
 
@@ -350,8 +365,8 @@ mod tests {
 
     #[test]
     fn postgres_definition_only_view_change_is_captured_and_classified() {
-        assert!(POSTGRES_CATALOG_OBJECTS_QUERY.contains("information_schema.views"));
-        assert!(POSTGRES_CATALOG_OBJECTS_QUERY.contains("views.view_definition"));
+        assert!(POSTGRES_CATALOG_OBJECTS_QUERY.contains("pg_get_viewdef(classes.oid, true)"));
+        assert!(!POSTGRES_CATALOG_OBJECTS_QUERY.contains("views.view_definition"));
         let before = view_snapshot(
             Dialect::PostgreSql,
             " SELECT accounts.id FROM accounts WHERE accounts.enabled ",
@@ -392,5 +407,24 @@ mod tests {
         assert_eq!(review.changes[0].change, ChangeKind::Modified);
         assert_eq!(review.changes[0].object_kind, ObjectKind::View);
         assert!(review.changes[0].orm_invisible);
+    }
+
+    #[test]
+    fn missing_view_definition_is_rejected_as_an_incomplete_capture() {
+        let error = catalog_object(
+            "app".to_owned(),
+            "active_accounts".to_owned(),
+            "VIEW".to_owned(),
+            None,
+        )
+        .unwrap_err();
+
+        assert!(error.to_string().contains("incomplete catalog capture"));
+        assert!(error.to_string().contains("app.active_accounts"));
+        assert!(
+            error
+                .to_string()
+                .contains("grant the read-only role access")
+        );
     }
 }
