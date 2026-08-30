@@ -88,9 +88,11 @@ fn catalog_object(
         ObjectKind::Table
     };
     let details = if kind == ObjectKind::View {
-        let definition = view_definition.ok_or_else(|| {
+        let definition = view_definition
+            .filter(|definition| !definition.trim().is_empty())
+            .ok_or_else(|| {
             anyhow::anyhow!(
-                "incomplete catalog capture: could not read the definition for view {schema}.{name}; grant the read-only role access to that view and retry"
+                "incomplete catalog capture: could not read the definition for view {schema}.{name}; grant SHOW VIEW on MySQL/MariaDB or verify catalog access on PostgreSQL, then retry"
             )
         })?;
         details([
@@ -410,21 +412,19 @@ mod tests {
     }
 
     #[test]
-    fn missing_view_definition_is_rejected_as_an_incomplete_capture() {
-        let error = catalog_object(
-            "app".to_owned(),
-            "active_accounts".to_owned(),
-            "VIEW".to_owned(),
-            None,
-        )
-        .unwrap_err();
+    fn unavailable_view_definition_is_rejected_as_an_incomplete_capture() {
+        for definition in [None, Some(String::new()), Some("  \n".to_owned())] {
+            let error = catalog_object(
+                "app".to_owned(),
+                "active_accounts".to_owned(),
+                "VIEW".to_owned(),
+                definition,
+            )
+            .unwrap_err();
 
-        assert!(error.to_string().contains("incomplete catalog capture"));
-        assert!(error.to_string().contains("app.active_accounts"));
-        assert!(
-            error
-                .to_string()
-                .contains("grant the read-only role access")
-        );
+            assert!(error.to_string().contains("incomplete catalog capture"));
+            assert!(error.to_string().contains("app.active_accounts"));
+            assert!(error.to_string().contains("grant SHOW VIEW"));
+        }
     }
 }

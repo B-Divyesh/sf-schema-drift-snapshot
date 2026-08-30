@@ -106,11 +106,14 @@ disposable database whose test role can create and remove roles:
 
 ```sh
 SDS_TEST_POSTGRES_ADMIN_URL="postgresql://test-admin:password@127.0.0.1/test-db?sslmode=disable" cargo test --test postgres_read_only
+SDS_TEST_MYSQL_ADMIN_URL="mysql://test-admin:password@127.0.0.1/test-db" cargo test --test mysql_read_only
 ```
 
 The test creates a view as the admin, captures it through a separate
 SELECT-only role, changes only its predicate, and requires one ORM-invisible
 difference. It also proves that the capture role cannot insert row data.
+The MySQL/MariaDB test also proves that a role without `SHOW VIEW` fails with
+an incomplete-capture error instead of writing blank view definitions.
 
 The landing/docs site is Vite + vanilla TypeScript. It does not receive or
 upload schema text; the interactive sample runs entirely in the browser.
