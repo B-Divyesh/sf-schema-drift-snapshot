@@ -1,3 +1,14 @@
+# Schema Drift Snapshot — verification 6 handoff
+
+Verification 6 passed on 2026-09-05 UTC for implementation `bbcce1f3d6cff9c3c91924521ed214dfff608f86`: zero findings and zero untested claims. See `.factory/verification-6.md` for the independent evidence.
+
+The verified gates are `npm ci`, `npm test`, `npm run lint`, `npm run build`, and `cargo package --allow-dirty`; all 17 declared claim commands passed individually. A clean installed crate ran `sds demo --json`; isolated PostgreSQL 16.15 and MariaDB 10.11.14 read-only-role tests passed; the live site byte-matched all 17 public build files and scored 100/100/100/100 in mobile Lighthouse. The live demo, offline reload, 390px/200% layout, keyboard, privacy, legal routes, 404, headers, and accessibility matrix passed.
+
+Billing remains an external factory task. Checkout remains deliberately closed and no user-facing link points to the unavailable billing endpoint. No product code was changed during verification.
+
+---
+
+
 # Schema Drift Snapshot — repair 5 handoff
 
 Work order: `schema-drift-snapshot-repair-5`
