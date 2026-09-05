@@ -1,3 +1,28 @@
+# Schema Drift Snapshot — review 1 handoff
+
+Strict review 1 passed on 2026-09-05 UTC for implementation
+`bbcce1f3d6cff9c3c91924521ed214dfff608f86`, using documentation baseline
+`267c5b8c9c5fbdb6e24b3111c71a3c351318ee2a`: zero findings and zero untested
+claims. See `.factory/review-1.md` for the complete evidence.
+
+From a clean detached checkout, all 17 claim commands passed individually,
+followed by `npm test`, `npm run lint`, `npm run build`, and
+`cargo package --allow-dirty`. The packaged crate installed into an empty
+consumer root and completed its demo, normal comparison, empty, invalid, and
+exit-code paths. Isolated PostgreSQL 16.15 and MariaDB 10.11.14 read-only-role
+tests passed and the temporary processes were stopped.
+
+Fresh live desktop and phone reviews passed the first-screen, one-click demo,
+reset, storage isolation, keyboard, reduced-motion, 200% text, accessibility,
+privacy, legal, link, 404, offline, header, and caching checks. All 17 public
+files byte-match the candidate build. Mobile Lighthouse scored 100/100/100/100
+with 923ms LCP, 13ms TBT, and zero CLS. No product code was changed.
+
+Billing registration remains an external factory task. Checkout is honestly
+closed and no broken purchase link is exposed.
+
+---
+
 # Schema Drift Snapshot — verification 6 handoff
 
 Verification 6 passed on 2026-09-05 UTC for implementation `bbcce1f3d6cff9c3c91924521ed214dfff608f86`: zero findings and zero untested claims. See `.factory/verification-6.md` for the independent evidence.
